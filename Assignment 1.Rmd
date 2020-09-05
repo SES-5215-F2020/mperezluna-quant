@@ -4,17 +4,31 @@ author: "Miguel Perez Luna"
 date: "9/3/2020"
 output: html_document
 ---
-# Level 1 title
 
-Here is some text!
-
-## Level 2 title
-
-More text.
-
-```{r}
-2 + 2
+```{r, message=FALSE}
+library(tidycensus)
+library(tidyverse)
 ```
 
-That was the answer!
+## Variables Used:
+
+```{r load person-level data, results = 'hide'}
+person_data <- get_pums(variables = c("SEX",
+                                      "JWTR",
+                                      "SCHL",
+                                      "PINCP",
+                                      "JWMNP",
+                                      "GRPIP",
+                                      "AGEP"),
+                        state = "08",
+                        year = 2018,
+                        survey = "acs1",
+                        recode = TRUE) %>%
+  filter(JWMNP > 0) %>%
+  select(SEX_label, JWTR_label, SCHL_label, PINCP, JWMNP, GRPIP, AGEP)
+```
+
+```{r}
+person_data
+```
 
