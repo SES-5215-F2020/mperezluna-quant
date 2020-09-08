@@ -1,7 +1,7 @@
 ---
 title: "Assignment 1"
 author: "Miguel Perez Luna"
-date: "9/3/2020"
+date: "9/8/2020"
 output: html_document
 ---
 
@@ -12,10 +12,31 @@ library(tidyverse)
 
 ## Variables Used:
 
+I decided to explore transportation trends at the person level in the state of Colorado. I selected eight variables from person_vars_2018 and from hh_vars_2018:
+
+1. Sex (SEX) (categorical)
+
+2. Means of Transportation to Work (JWTR) (categorical)
+
+3. Educational Attainment (SCHL) (categorical)
+
+4. Vehicles (1 ton or less) available (VEH) (categorical)
+
+5. Income (PINCP) (continuous)
+
+6. Travel Time to Work (JWMNP) (continuous)
+
+7. Gross Rent (GRPIP) (continuous)
+
+8. Age (AGEP) (continuous)
+
+The VEH variable had several observations that were missing information, and in place of a value expressed "N/A (GQ/vacant)". Furthermore, the same variable expressed numbers of vehicles with labels such as "No vehicles", "1 vehicle", "2 vehicles", and so on up until "6 or more vehicles". I chose to convert this categorical variable to a continuous variable using mutate(). Lastly, I filtered vehicle to only express observations with data, as well as JWMNP to show positive values. 
+
 ```{r load person-level data, results = 'hide'}
-person_data <- get_pums(variables = c("SEX",
+transpo_data <- get_pums(variables = c("SEX",
                                       "JWTR",
                                       "SCHL",
+                                      "VEH",
                                       "PINCP",
                                       "JWMNP",
                                       "GRNTP",
@@ -24,11 +45,27 @@ person_data <- get_pums(variables = c("SEX",
                         year = 2018,
                         survey = "acs1",
                         recode = TRUE) %>%
+  mutate(vehicle = case_when(
+    VEH_label == "No vehicles" ~ 0,
+    VEH_label == "1 vehicle" ~ 1,
+    VEH_label == "2 vehicles" ~ 2,
+    VEH_label == "3 vehicles" ~ 3,
+    VEH_label == "4 vehicles" ~ 4,
+    VEH_label == "5 vehicles" ~ 5,
+    VEH_label == "6 or more vehicles" ~ 6)) %>%
+  filter(vehicle >= 0) %>%
   filter(JWMNP > 0) %>%
-  select(SEX_label, JWTR_label, SCHL_label, PINCP, JWMNP, GRNTP, AGEP)
+  select(SEX_label, JWTR_label, SCHL_label, vehicle, PINCP, JWMNP, GRNTP, AGEP)
 ```
+
+The first 10 rows of my data are shown below. 
 
 ```{r}
-person_data
+transpo_data
 ```
+My final dataset has 25,230 rows, which means my analysis will include 25,230 persons.
 
+Lastly, I've saved my data as a CSV file.
+```{r}
+write_csv(transpo_data,"transpo_data.csv")
+```

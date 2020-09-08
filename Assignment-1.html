@@ -364,7 +364,7 @@ summary {
 
 <h1 class="title toc-ignore">Assignment 1</h1>
 <h4 class="author">Miguel Perez Luna</h4>
-<h4 class="date">9/3/2020</h4>
+<h4 class="date">9/8/2020</h4>
 
 </div>
 
@@ -373,9 +373,22 @@ summary {
 library(tidyverse)</code></pre>
 <div id="variables-used" class="section level2">
 <h2>Variables Used:</h2>
-<pre class="r"><code>person_data &lt;- get_pums(variables = c(&quot;SEX&quot;,
+<p>I decided to explore transportation trends at the person level in the state of Colorado. I selected eight variables from person_vars_2018 and from hh_vars_2018:</p>
+<ol style="list-style-type: decimal">
+<li><p>Sex (SEX) (categorical)</p></li>
+<li><p>Means of Transportation to Work (JWTR) (categorical)</p></li>
+<li><p>Educational Attainment (SCHL) (categorical)</p></li>
+<li><p>Vehicles (1 ton or less) available (VEH) (categorical)</p></li>
+<li><p>Income (PINCP) (continuous)</p></li>
+<li><p>Travel Time to Work (JWMNP) (continuous)</p></li>
+<li><p>Gross Rent (GRPIP) (continuous)</p></li>
+<li><p>Age (AGEP) (continuous)</p></li>
+</ol>
+<p>The VEH variable had several observations that were missing information, and in place of a value expressed “N/A (GQ/vacant)”. Furthermore, the same variable expressed numbers of vehicles with labels such as “No vehicles”, “1 vehicle”, “2 vehicles”, and so on up until “6 or more vehicles”. I chose to convert this categorical variable to a continuous variable using mutate(). Lastly, I filtered vehicle to only express observations with data, as well as JWMNP to show positive values.</p>
+<pre class="r"><code>transpo_data &lt;- get_pums(variables = c(&quot;SEX&quot;,
                                       &quot;JWTR&quot;,
                                       &quot;SCHL&quot;,
+                                      &quot;VEH&quot;,
                                       &quot;PINCP&quot;,
                                       &quot;JWMNP&quot;,
                                       &quot;GRNTP&quot;,
@@ -384,24 +397,37 @@ library(tidyverse)</code></pre>
                         year = 2018,
                         survey = &quot;acs1&quot;,
                         recode = TRUE) %&gt;%
+  mutate(vehicle = case_when(
+    VEH_label == &quot;No vehicles&quot; ~ 0,
+    VEH_label == &quot;1 vehicle&quot; ~ 1,
+    VEH_label == &quot;2 vehicles&quot; ~ 2,
+    VEH_label == &quot;3 vehicles&quot; ~ 3,
+    VEH_label == &quot;4 vehicles&quot; ~ 4,
+    VEH_label == &quot;5 vehicles&quot; ~ 5,
+    VEH_label == &quot;6 or more vehicles&quot; ~ 6)) %&gt;%
+  filter(vehicle &gt;= 0) %&gt;%
   filter(JWMNP &gt; 0) %&gt;%
-  select(SEX_label, JWTR_label, SCHL_label, PINCP, JWMNP, GRNTP, AGEP)</code></pre>
+  select(SEX_label, JWTR_label, SCHL_label, vehicle, PINCP, JWMNP, GRNTP, AGEP)</code></pre>
 <pre><code>## Getting data from the 2018 1-year ACS Public Use Microdata Sample</code></pre>
-<pre class="r"><code>person_data</code></pre>
-<pre><code>## # A tibble: 25,719 x 7
-##    SEX_label JWTR_label      SCHL_label                  PINCP JWMNP GRNTP  AGEP
-##    &lt;chr&gt;     &lt;chr&gt;           &lt;chr&gt;                       &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt;
-##  1 Male      Walked          GED or alternative credent… 15400    20     0    18
-##  2 Male      Walked          1 or more years of college… 13500    10     0    21
-##  3 Male      Car, truck, or… Regular high school diploma 25000    10     0    22
-##  4 Male      Walked          1 or more years of college… 13100    10     0    21
-##  5 Male      Other method    Some college, but less tha… 30000     5     0    19
-##  6 Male      Car, truck, or… 1 or more years of college… 30000    30     0    59
-##  7 Female    Walked          1 or more years of college… 15400    10     0    21
-##  8 Female    Walked          1 or more years of college… 12400     5     0    20
-##  9 Female    Walked          Bachelor&#39;s degree           55000     3     0    45
-## 10 Female    Car, truck, or… Regular high school diploma 16100    40     0    32
-## # … with 25,709 more rows</code></pre>
+<p>The first 10 rows of my data are shown below.</p>
+<pre class="r"><code>transpo_data</code></pre>
+<pre><code>## # A tibble: 25,230 x 8
+##    SEX_label JWTR_label    SCHL_label            vehicle PINCP JWMNP GRNTP  AGEP
+##    &lt;chr&gt;     &lt;chr&gt;         &lt;chr&gt;                   &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt;
+##  1 Male      Car, truck, … Some college, but le…       1 28000    15  1218    25
+##  2 Female    Walked        Regular high school …       1  1000    20  1218    19
+##  3 Female    Car, truck, … Regular high school …       2 25000     5   850    52
+##  4 Male      Bicycle       Bachelor&#39;s degree           2 44000     5   850    54
+##  5 Male      Car, truck, … Bachelor&#39;s degree           3 57000     5  3330    26
+##  6 Male      Car, truck, … Bachelor&#39;s degree           3 41000    35  3330    27
+##  7 Male      Car, truck, … Bachelor&#39;s degree           3 75000     5  3330    26
+##  8 Male      Car, truck, … Regular high school …       2 54000   157     0    51
+##  9 Female    Car, truck, … Some college, but le…       2 45000   157     0    39
+## 10 Female    Car, truck, … 1 or more years of c…       1 28000    20  2003    43
+## # … with 25,220 more rows</code></pre>
+<p>My final dataset has 25,230 rows, which means my analysis will include 25,230 persons.</p>
+<p>Lastly, I’ve saved my data as a CSV file.</p>
+<pre class="r"><code>write_csv(transpo_data,&quot;transpo_data.csv&quot;)</code></pre>
 </div>
 
 
