@@ -378,18 +378,18 @@ library(tidyverse)</code></pre>
                                       &quot;SCHL&quot;,
                                       &quot;PINCP&quot;,
                                       &quot;JWMNP&quot;,
-                                      &quot;GRPIP&quot;,
+                                      &quot;GRNTP&quot;,
                                       &quot;AGEP&quot;),
                         state = &quot;08&quot;,
                         year = 2018,
                         survey = &quot;acs1&quot;,
                         recode = TRUE) %&gt;%
   filter(JWMNP &gt; 0) %&gt;%
-  select(SEX_label, JWTR_label, SCHL_label, PINCP, JWMNP, GRPIP, AGEP)</code></pre>
+  select(SEX_label, JWTR_label, SCHL_label, PINCP, JWMNP, GRNTP, AGEP)</code></pre>
 <pre><code>## Getting data from the 2018 1-year ACS Public Use Microdata Sample</code></pre>
 <pre class="r"><code>person_data</code></pre>
 <pre><code>## # A tibble: 25,719 x 7
-##    SEX_label JWTR_label      SCHL_label                  PINCP JWMNP GRPIP  AGEP
+##    SEX_label JWTR_label      SCHL_label                  PINCP JWMNP GRNTP  AGEP
 ##    &lt;chr&gt;     &lt;chr&gt;           &lt;chr&gt;                       &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt;
 ##  1 Male      Walked          GED or alternative credent… 15400    20     0    18
 ##  2 Male      Walked          1 or more years of college… 13500    10     0    21

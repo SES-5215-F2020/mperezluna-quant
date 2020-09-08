@@ -18,14 +18,14 @@ person_data <- get_pums(variables = c("SEX",
                                       "SCHL",
                                       "PINCP",
                                       "JWMNP",
-                                      "GRPIP",
+                                      "GRNTP",
                                       "AGEP"),
                         state = "08",
                         year = 2018,
                         survey = "acs1",
                         recode = TRUE) %>%
   filter(JWMNP > 0) %>%
-  select(SEX_label, JWTR_label, SCHL_label, PINCP, JWMNP, GRPIP, AGEP)
+  select(SEX_label, JWTR_label, SCHL_label, PINCP, JWMNP, GRNTP, AGEP)
 ```
 
 ```{r}
