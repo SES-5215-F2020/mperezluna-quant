@@ -26,11 +26,11 @@ I decided to explore transportation trends at the person level in the state of C
 
 6. Travel Time to Work (JWMNP) (continuous)
 
-7. Gross Rent (GRPIP) (continuous)
+7. Gross Rent (GRNTP) (continuous)
 
 8. Age (AGEP) (continuous)
 
-The VEH variable had several observations that were missing information, and in place of a value expressed "N/A (GQ/vacant)". Furthermore, the same variable expressed numbers of vehicles with labels such as "No vehicles", "1 vehicle", "2 vehicles", and so on up until "6 or more vehicles". I chose to convert this categorical variable to a continuous variable using mutate(). Lastly, I filtered vehicle to only express observations with data, as well as JWMNP to show positive values. 
+The VEH variable had several observations that were missing information, and in place of a value expressed "N/A (GQ/vacant)". Furthermore, the same variable expressed numbers of vehicles with labels such as "No vehicles", "1 vehicle", "2 vehicles", and so on up until "6 or more vehicles". I chose to convert this categorical variable to a continuous variable using mutate(). Lastly, I filtered vehicle to only express observations with data, as well as JWMNP to show positive values. I also filtered the other continuous values to only show positive values.
 
 ```{r load person-level data, results = 'hide'}
 transpo_data <- get_pums(variables = c("SEX",
@@ -54,7 +54,7 @@ transpo_data <- get_pums(variables = c("SEX",
     VEH_label == "5 vehicles" ~ 5,
     VEH_label == "6 or more vehicles" ~ 6)) %>%
   filter(vehicle >= 0) %>%
-  filter(JWMNP > 0) %>%
+  filter(JWMNP > 0, vehicle > -1, PINCP > -1, GRNTP > -1, AGEP > 0) %>%
   select(SEX_label, JWTR_label, SCHL_label, vehicle, PINCP, JWMNP, GRNTP, AGEP)
 ```
 
@@ -63,7 +63,7 @@ The first 10 rows of my data are shown below.
 ```{r}
 transpo_data
 ```
-My final dataset has 25,230 rows, which means my analysis will include 25,230 persons.
+My final dataset has 6622 rows, which means my analysis will include 6622 persons.
 
 Lastly, I've saved my data as a CSV file.
 ```{r}

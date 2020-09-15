@@ -13,9 +13,11 @@ output:
 knitr::opts_chunk$set(echo=TRUE, warning=FALSE, message=FALSE)
 ```
 
+
 ```{r load libraries}
 library(tidyverse)
 library(ggplot2)
+library(scales)
 ```
 
 I'll start by loading the person-level data I created in Assignment 1 using read.csv().
@@ -25,7 +27,7 @@ person_data <- read.csv("transpo_data.csv")
 attach(person_data)
 ```
 
-These were the variables that I am considering: 
+These are the variables that I am considering: 
 
 1. Sex (SEX) (categorical)
 
@@ -33,31 +35,324 @@ These were the variables that I am considering:
 
 3. Educational Attainment (SCHL) (categorical)
 
-4. Vehicles (1 ton or less) available (VEH) (categorical)
+4. Vehicles (1 ton or less) available (vehicle) (continuous)
 
 5. Income (PINCP) (continuous)
 
 6. Travel Time to Work (JWMNP) (continuous)
 
-7. Gross Rent (GRPIP) (continuous)
+7. Gross Rent (GRNTP) (continuous)
 
 8. Age (AGEP) (continuous)
 
 I will start by finding the sample mean, sample standard deviation, 95% confidence interval for the population mean, and the interquartile range for my continuous variables. I will also build a histogram for each one to show its distribution. 
 
+## Number of Vehicles Available 
+
+The summary of the number of vehicles is below. 
+
+```{r}
+vehicle_summary <- summary(person_data$vehicle)
+
+vehicle_summary
+
+```
+
+The standard deviation of the number of vehicles is below.
+
+```{r}
+sd(person_data$vehicle)
+```
+
+The 95% confidence interval for the population mean of the number of vehicles is below. 
+
+```{r}
+conf_int <- t.test(person_data$vehicle)
+
+conf_int
+```
+
+```{r}
+ggplot(person_data, aes(x = vehicle)) +
+  geom_histogram()
+```
+
+```{r}
+pdf('vehicle.pdf')
+ggplot(person_data, aes(x = vehicle)) +
+  geom_histogram()
+dev.off()
+```
+
+
+
 ## Income
 
-The summary of the income variable is below. 
+The summary of the income is below. 
 
 ```{r}
 PINCP_summary <- summary(person_data$PINCP)
 
 PINCP_summary
+
+```
+
+The standard deviation of the income is below.
+
+```{r}
+sd(person_data$PINCP)
+```
+
+The 95% confidence interval for the population mean of the income is below. 
+
+```{r}
+conf_int <- t.test(person_data$PINCP)
+
+conf_int
+```
+
+Mengyao helped me here, she told me about options(scipen = 999) which switched the x-axis from displaying values in scientific notation to displaying values in standard form.
+
+```{r}
+options(scipen = 999)
+ggplot(person_data, aes(x = PINCP)) +
+  geom_histogram()
 ```
 
 ```{r}
-paste("The sample mean for income is",
-      prettyNum(mean(PINCP), digits = 7), "dollars")
+pdf('income.pdf')
+ggplot(person_data, aes(x = PINCP)) +
+  geom_histogram()
+dev.off()
+```
+
+## Travel Time to Work 
+
+The summary of the travel time to work is below. 
+
+```{r}
+JWMNP_summary <- summary(person_data$JWMNP)
+
+JWMNP_summary
 
 ```
+
+The standard deviation of the travel time to work is below.
+
+```{r}
+sd(person_data$JWMNP)
+```
+
+The 95% confidence interval for the population mean of the travel time to work is below. 
+
+```{r}
+conf_int <- t.test(person_data$JWMNP)
+
+conf_int
+```
+
+```{r}
+ggplot(person_data, aes(x = JWMNP)) +
+  geom_histogram()
+```
+
+```{r}
+pdf('traveltime.pdf')
+ggplot(person_data, aes(x = JWMNP)) +
+  geom_histogram()
+dev.off()
+```
+
+## Gross Rent
+
+The summary of the gross rent is below. 
+
+```{r}
+GRNTP_summary <- summary(person_data$GRNTP)
+
+GRNTP_summary
+
+```
+
+The standard deviation of the gross rent is below.
+
+```{r}
+sd(person_data$GRNTP)
+```
+
+The 95% confidence interval for the population mean of the gross rent is below. 
+
+```{r}
+conf_int <- t.test(person_data$GRNTP)
+
+conf_int
+```
+
+```{r}
+ggplot(person_data, aes(x = GRNTP)) +
+  geom_histogram()
+```
+
+```{r}
+pdf('rent.pdf')
+ggplot(person_data, aes(x = GRNTP)) +
+  geom_histogram()
+dev.off()
+```
+
+## Age
+
+The summary of the age variable is below. 
+
+```{r}
+AGEP_summary <- summary(person_data$AGEP)
+
+AGEP_summary
+
+```
+
+The standard deviation of ages is below.
+
+```{r}
+sd(person_data$AGEP)
+```
+
+The 95% confidence interval for the population mean of ages is below. 
+
+```{r}
+conf_int <- t.test(person_data$AGEP)
+
+conf_int
+```
+
+```{r}
+ggplot(person_data, aes(x = AGEP)) +
+  geom_histogram()
+```
+
+```{r}
+pdf('age.pdf')
+ggplot(person_data, aes(x = AGEP)) +
+  geom_histogram()
+dev.off()
+```
+
+## Sex
+
+It looks like there are two possible values of the Sex variable.
+
+```{r}
+unique(person_data$SEX_label)
+```
+
+The table below shows the number of observations in each category.
+
+```{r}
+table(person_data$SEX_label)
+```
+
+I'll convert these values to proportions by dividing by the total number of observations. 
+
+```{r}
+table(person_data$SEX_label) / sum(table(person_data$SEX_label))
+```
+
+The 95% confidence interval for the proportion of females and males is below.
+
+```{r}
+t.test(person_data$SEX_label == "Female")
+t.test(person_data$SEX_label == "Male")
+```
+
+
+## Means of Transportation to Work
+
+It looks like there are ten possible values of the means of transportation to work variable.
+
+```{r}
+unique(person_data$JWTR_label)
+```
+
+The table below shows the number of observations in each category.
+
+```{r}
+table(person_data$JWTR_label)
+```
+
+I'll convert these values to proportions by dividing by the total number of observations. 
+
+```{r}
+table(person_data$JWTR_label) / sum(table(person_data$JWTR_label))
+```
+
+The 95% confidence interval for the proportion of each value is below.
+
+```{r}
+t.test(person_data$JWTR_label == "Bicycle")
+t.test(person_data$JWTR_label == "Bus or trolley bus ")
+t.test(person_data$JWTR_label == "Car, truck, or van")
+t.test(person_data$JWTR_label == "Motorcycle")
+t.test(person_data$JWTR_label == "Other method")
+t.test(person_data$JWTR_label == "Railroad")
+t.test(person_data$JWTR_label == "Streetcar or trolley car (carro publico in Puerto Rico)")
+t.test(person_data$JWTR_label == "Subway or elevated")
+t.test(person_data$JWTR_label == "Taxicab")
+t.test(person_data$JWTR_label == "Walked")
+```
+
+## Educational Attainment
+
+It looks like there are twenty three possible values of the educational attainment variable.
+
+```{r}
+unique(person_data$SCHL_label)
+```
+
+The table below shows the number of observations in each category.
+
+```{r}
+table(person_data$SCHL_label)
+```
+
+I'll convert these values to proportions by dividing by the total number of observations. 
+
+```{r}
+table(person_data$SCHL_label) / sum(table(person_data$SCHL_label))
+```
+
+The 95% confidence interval for the proportion of each value is below.
+
+```{r}
+t.test(person_data$SCHL_label == "No schooling completed")
+t.test(person_data$SCHL_label == "Kindergarten")
+t.test(person_data$SCHL_label == "Grade 1")
+t.test(person_data$SCHL_label == "Grade 2")
+t.test(person_data$SCHL_label == "Grade 3")
+t.test(person_data$SCHL_label == "Grade 4")
+t.test(person_data$SCHL_label == "Grade 5")
+t.test(person_data$SCHL_label == "Grade 6")
+t.test(person_data$SCHL_label == "Grade 7")
+t.test(person_data$SCHL_label == "Grade 8")
+t.test(person_data$SCHL_label == "Grade 9")
+t.test(person_data$SCHL_label == "Grade 10")
+t.test(person_data$SCHL_label == "Grade 11")
+t.test(person_data$SCHL_label == "12th grade - no diploma")
+t.test(person_data$SCHL_label == "Regular high school diploma")
+t.test(person_data$SCHL_label == "GED or alternative credential")
+t.test(person_data$SCHL_label == "Some college, but less than 1 year")
+t.test(person_data$SCHL_label == "1 or more years of college credit, no degree")
+t.test(person_data$SCHL_label == "Associate's degree")
+t.test(person_data$SCHL_label == "Bachelor's degree")
+t.test(person_data$SCHL_label == "Professional degree beyond a bachelor's degree")
+t.test(person_data$SCHL_label == "Master's degree")
+t.test(person_data$SCHL_label == "Doctorate degree")
+```
+
+
+
+
+
+
+
+
 
