@@ -54,7 +54,7 @@ transpo_data <- get_pums(variables = c("SEX",
     VEH_label == "5 vehicles" ~ 5,
     VEH_label == "6 or more vehicles" ~ 6)) %>%
   filter(vehicle >= 0) %>%
-  filter(JWMNP > 0, vehicle > -1, PINCP > -1, GRNTP > -1, AGEP > 0) %>%
+  filter(JWMNP > 0, vehicle > -1, PINCP > -1, GRNTP > 0, AGEP > 0) %>%
   select(SEX_label, JWTR_label, SCHL_label, vehicle, PINCP, JWMNP, GRNTP, AGEP)
 ```
 

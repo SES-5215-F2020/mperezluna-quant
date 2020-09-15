@@ -73,8 +73,12 @@ conf_int
 ```
 
 ```{r}
-ggplot(person_data, aes(x = vehicle)) +
-  geom_histogram()
+ggplot(person_data, 
+       aes(x = vehicle)) +
+          geom_histogram() +
+scale_x_continuous(name = "Number of Vehicles Available",
+                  breaks = seq(0, 6, by = 1)) +
+theme_bw()
 ```
 
 ```{r}
@@ -111,12 +115,14 @@ conf_int <- t.test(person_data$PINCP)
 conf_int
 ```
 
-Mengyao helped me here, she told me about options(scipen = 999) which switched the x-axis from displaying values in scientific notation to displaying values in standard form.
 
 ```{r}
-options(scipen = 999)
-ggplot(person_data, aes(x = PINCP)) +
-  geom_histogram()
+ggplot(person_data, 
+       aes(x = PINCP)) +
+          geom_histogram() +
+scale_x_continuous(name = "Income",
+                  breaks = seq(0, 1200000, by = 100000)) +
+theme_bw()
 ```
 
 ```{r}
@@ -152,8 +158,12 @@ conf_int
 ```
 
 ```{r}
-ggplot(person_data, aes(x = JWMNP)) +
-  geom_histogram()
+ggplot(person_data, 
+       aes(x = JWMNP)) +
+          geom_histogram() +
+scale_x_continuous(name = "Travel time to Work in Minutes",
+                  breaks = seq(0, 160, by = 25)) +
+theme_bw()
 ```
 
 ```{r}
@@ -189,8 +199,12 @@ conf_int
 ```
 
 ```{r}
-ggplot(person_data, aes(x = GRNTP)) +
-  geom_histogram()
+ggplot(person_data, 
+       aes(x = GRNTP)) +
+          geom_histogram() +
+scale_x_continuous(name = "Gross Rent",
+                  breaks = seq(0, 5000, by = 500)) +
+theme_bw()
 ```
 
 ```{r}
@@ -226,8 +240,12 @@ conf_int
 ```
 
 ```{r}
-ggplot(person_data, aes(x = AGEP)) +
-  geom_histogram()
+ggplot(person_data, 
+       aes(x = AGEP)) +
+          geom_histogram() +
+scale_x_continuous(name = "Age",
+                  breaks = seq(0, 90, by = 10)) +
+theme_bw()
 ```
 
 ```{r}
