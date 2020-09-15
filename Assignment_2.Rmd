@@ -1,0 +1,63 @@
+---
+title: "Assignment 2"
+author: "Miguel Perez Luna"
+date: "9/13/2020"
+output: 
+  html_document:
+    theme: cosmo
+    toc_depth: 3
+    toc_float: true
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo=TRUE, warning=FALSE, message=FALSE)
+```
+
+```{r load libraries}
+library(tidyverse)
+library(ggplot2)
+```
+
+I'll start by loading the person-level data I created in Assignment 1 using read.csv().
+
+```{r}
+person_data <- read.csv("transpo_data.csv")
+attach(person_data)
+```
+
+These were the variables that I am considering: 
+
+1. Sex (SEX) (categorical)
+
+2. Means of Transportation to Work (JWTR) (categorical)
+
+3. Educational Attainment (SCHL) (categorical)
+
+4. Vehicles (1 ton or less) available (VEH) (categorical)
+
+5. Income (PINCP) (continuous)
+
+6. Travel Time to Work (JWMNP) (continuous)
+
+7. Gross Rent (GRPIP) (continuous)
+
+8. Age (AGEP) (continuous)
+
+I will start by finding the sample mean, sample standard deviation, 95% confidence interval for the population mean, and the interquartile range for my continuous variables. I will also build a histogram for each one to show its distribution. 
+
+## Income
+
+The summary of the income variable is below. 
+
+```{r}
+PINCP_summary <- summary(person_data$PINCP)
+
+PINCP_summary
+```
+
+```{r}
+paste("The sample mean for income is",
+      prettyNum(mean(PINCP), digits = 7), "dollars")
+
+```
+
