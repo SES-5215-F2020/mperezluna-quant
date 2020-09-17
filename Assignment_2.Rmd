@@ -1,7 +1,7 @@
 ---
 title: "Assignment 2"
 author: "Miguel Perez Luna"
-date: "9/13/2020"
+date: "9/16/2020"
 output: 
   html_document:
     theme: cosmo
@@ -83,8 +83,12 @@ theme_bw()
 
 ```{r}
 pdf('vehicle.pdf')
-ggplot(person_data, aes(x = vehicle)) +
-  geom_histogram()
+ggplot(person_data, 
+       aes(x = vehicle)) +
+          geom_histogram() +
+scale_x_continuous(name = "Number of Vehicles Available",
+                  breaks = seq(0, 6, by = 1)) +
+theme_bw()
 dev.off()
 ```
 
@@ -117,6 +121,7 @@ conf_int
 
 
 ```{r}
+options(scipen = 999)
 ggplot(person_data, 
        aes(x = PINCP)) +
           geom_histogram() +
@@ -127,8 +132,13 @@ theme_bw()
 
 ```{r}
 pdf('income.pdf')
-ggplot(person_data, aes(x = PINCP)) +
-  geom_histogram()
+options(scipen = 999)
+ggplot(person_data, 
+       aes(x = PINCP)) +
+          geom_histogram() +
+scale_x_continuous(name = "Income",
+                  breaks = seq(0, 1200000, by = 100000)) +
+theme_bw()
 dev.off()
 ```
 
@@ -168,8 +178,12 @@ theme_bw()
 
 ```{r}
 pdf('traveltime.pdf')
-ggplot(person_data, aes(x = JWMNP)) +
-  geom_histogram()
+ggplot(person_data, 
+       aes(x = JWMNP)) +
+          geom_histogram() +
+scale_x_continuous(name = "Travel time to Work in Minutes",
+                  breaks = seq(0, 160, by = 25)) +
+theme_bw()
 dev.off()
 ```
 
@@ -209,8 +223,12 @@ theme_bw()
 
 ```{r}
 pdf('rent.pdf')
-ggplot(person_data, aes(x = GRNTP)) +
-  geom_histogram()
+ggplot(person_data, 
+       aes(x = GRNTP)) +
+          geom_histogram() +
+scale_x_continuous(name = "Gross Rent",
+                  breaks = seq(0, 5000, by = 500)) +
+theme_bw()
 dev.off()
 ```
 
@@ -250,8 +268,12 @@ theme_bw()
 
 ```{r}
 pdf('age.pdf')
-ggplot(person_data, aes(x = AGEP)) +
-  geom_histogram()
+ggplot(person_data, 
+       aes(x = AGEP)) +
+          geom_histogram() +
+scale_x_continuous(name = "Age",
+                  breaks = seq(0, 90, by = 10)) +
+theme_bw()
 dev.off()
 ```
 
@@ -364,6 +386,227 @@ t.test(person_data$SCHL_label == "Bachelor's degree")
 t.test(person_data$SCHL_label == "Professional degree beyond a bachelor's degree")
 t.test(person_data$SCHL_label == "Master's degree")
 t.test(person_data$SCHL_label == "Doctorate degree")
+```
+
+## Formatting 
+
+Below I will try and format the information for each of my categorical variables above. 
+
+### Sex
+```{r}
+sex <- unique(SEX_label)
+sex
+```
+
+```{r}
+male <- t.test(SEX_label == sex[1])
+female <- t.test(SEX_label == sex[2])
+
+shares <- tibble('Sex' = c("Male", 
+                        "Female"),
+                 `Share` = c(male$estimate, 
+                            female$estimate),
+                 Low = c(male$conf.int[1],
+                         female$conf.int[1]),
+                 High = c(male$conf.int[2],
+                         female$conf.int[2]))
+knitr::kable(shares, caption = "Proportions and 95-percent confidence intervals")
+```
+
+### Means of transportation to work 
+
+```{r}
+meansoftravel <- unique(JWTR_label)
+meansoftravel
+```
+
+```{r}
+car_truck_van <- t.test(JWTR_label == meansoftravel[1])
+walked <- t.test(JWTR_label == meansoftravel[2])
+bicycle <-  t.test(JWTR_label == meansoftravel[3])
+bus_trolleybus <- t.test(JWTR_label == meansoftravel[4])
+subway_elevated <- t.test(JWTR_label == meansoftravel[5])
+other <- t.test(JWTR_label == meansoftravel[6])
+taxicab <- t.test(JWTR_label == meansoftravel[7])
+motorcycle <- t.test(JWTR_label == meansoftravel[8])
+railroad <- t.test(JWTR_label == meansoftravel[9])
+streetcar_trolley <-  t.test(JWTR_label == meansoftravel[10])
+
+shares <- tibble('Means of Travel' = c("Car, Truck, or Van", 
+                            "Walked", 
+                            "Bicycle",
+                            "Bus or Trolley Bus",
+                            "Subway or Elevated",
+                            "Other Method",
+                            "Taxicab",
+                            "Motorcycle",
+                            "Railroad",
+                            "Streetcar or Trolley Car"),
+                 `Share` = c(car_truck_van$estimate, 
+                             walked$estimate,
+                             bicycle$estimate,
+                             bus_trolleybus$estimate,
+                             subway_elevated$estimate,
+                             other$estimate,
+                             taxicab$estimate,
+                             motorcycle$estimate,
+                             railroad$estimate,
+                             streetcar_trolley$estimate),
+                 Low = c(car_truck_van$conf.int[1], 
+                             walked$conf.int[1],
+                             bicycle$conf.int[1],
+                             bus_trolleybus$conf.int[1],
+                             subway_elevated$conf.int[1],
+                             other$conf.int[1],
+                             taxicab$conf.int[1],
+                             motorcycle$conf.int[1],
+                             railroad$conf.int[1],
+                             streetcar_trolley$conf.int[1]),
+                 High = c(car_truck_van$conf.int[2], 
+                             walked$conf.int[2],
+                             bicycle$conf.int[2],
+                             bus_trolleybus$conf.int[2],
+                             subway_elevated$conf.int[2],
+                             other$conf.int[2],
+                             taxicab$conf.int[2],
+                             motorcycle$conf.int[2],
+                             railroad$conf.int[2],
+                             streetcar_trolley$conf.int[2]))
+knitr::kable(shares, caption = "Proportions and 95-percent confidence intervals")
+```
+
+### Educational Attainmnet
+
+```{r}
+education <- unique(SCHL_label)
+education
+```
+
+
+```{r}
+lessoneyearcollege <- t.test(SCHL_label == education[1])
+highschooldiploma <- t.test(SCHL_label == education[2])
+bachelors <- t.test(SCHL_label == education[3])
+oneyearcollege <- t.test(SCHL_label == education[4])
+masters <- t.test(SCHL_label == education[5])
+ged_alternative <- t.test(SCHL_label == education[6])
+doctorate <- t.test(SCHL_label == education[7])
+associates <- t.test(SCHL_label == education[8])
+grade8 <- t.test(SCHL_label == education[9])
+grade7 <- t.test(SCHL_label == education[10])
+grade10 <- t.test(SCHL_label == education[11])
+grade12_nodiploma <- t.test(SCHL_label == education[12])
+grade6 <- t.test(SCHL_label == education[13])
+grade11 <- t.test(SCHL_label == education[14])
+professionaldegree <- t.test(SCHL_label == education[15])
+grade9 <- t.test(SCHL_label == education[16])
+noschool <- t.test(SCHL_label == education[17])
+grade5 <- t.test(SCHL_label == education[18])
+grade4 <- t.test(SCHL_label == education[19])
+nursery_preschool <- t.test(SCHL_label == education[20])
+grade_3 <- t.test(SCHL_label == education[21])
+grade_1 <- t.test(SCHL_label == education[22])
+kindergarten <- t.test(SCHL_label == education[23])
+grade_2 <- t.test(SCHL_label == education[24])
+
+shares <- tibble('Educational Attainment' = 
+                         c("Some college, but less than 1 year", 
+                            "Regular high school diploma", 
+                            "Bachelor's Degree",
+                            "One year of college, no degree",
+                            "Master's Degree",
+                            "GED or alternative credential",
+                            "Doctorate Degree",
+                            "Associate's Degree",
+                            "Grade 8",
+                            "Grade 7",
+                            "Grade 10",
+                            "Grade 12 - no diploma",
+                            "Grade 6",
+                            "Grade 11",
+                            "Professional Degree beyond Bachelor's",
+                            "Grade 9",
+                            "No schooling completed",
+                            "Grade 5",
+                            "Grade 4",
+                            "Nursery schoolor preschool",
+                            "Grade 3",
+                            "Grade 1",
+                            "Kindergarten",
+                            "Grade 2"),
+                 `Share` = c(lessoneyearcollege$estimate, 
+                             highschooldiploma$estimate,
+                             bachelors$estimate,
+                             oneyearcollege$estimate,
+                             masters$estimate,
+                             ged_alternative$estimate,
+                             doctorate$estimate,
+                             associates$estimate,
+                             grade8$estimate,
+                             grade7$estimate,
+                             grade10$estimate,
+                             grade12_nodiploma$estimate,
+                             grade6$estimate,
+                             grade11$estimate,
+                             professionaldegree$estimate,
+                             grade9$estimate,
+                             noschool$estimate,
+                             grade5$estimate,
+                             grade4$estimate,
+                             nursery_preschool$estimate,
+                             grade_3$estimate,
+                             grade_1$estimate,
+                             kindergarten$estimate,
+                             grade_2$estimate),
+                 Low = c(lessoneyearcollege$conf.int[1], 
+                             highschooldiploma$conf.int[1],
+                             bachelors$conf.int[1],
+                             oneyearcollege$conf.int[1],
+                             masters$conf.int[1],
+                             ged_alternative$conf.int[1],
+                             doctorate$conf.int[1],
+                             associates$conf.int[1],
+                             grade8$conf.int[1],
+                             grade7$conf.int[1],
+                             grade10$conf.int[1],
+                             grade12_nodiploma$conf.int[1],
+                             grade6$conf.int[1],
+                             grade11$conf.int[1],
+                             professionaldegree$conf.int[1],
+                             grade9$conf.int[1],
+                             noschool$conf.int[1],
+                             grade5$conf.int[1],
+                             grade4$conf.int[1],
+                             nursery_preschool$conf.int[1],
+                             grade_3$conf.int[1],
+                             grade_1$conf.int[1],
+                             kindergarten$conf.int[1],
+                             grade_2$conf.int[1]),
+                 High = c(lessoneyearcollege$conf.int[2], 
+                             highschooldiploma$conf.int[2],
+                             bachelors$conf.int[2],
+                             oneyearcollege$conf.int[2],
+                             masters$conf.int[2],
+                             ged_alternative$conf.int[2],
+                             doctorate$conf.int[2],
+                             associates$conf.int[2],
+                             grade8$conf.int[2],
+                             grade7$conf.int[2],
+                             grade10$conf.int[2],
+                             grade12_nodiploma$conf.int[2],
+                             grade6$conf.int[2],
+                             grade11$conf.int[2],
+                             professionaldegree$conf.int[2],
+                             grade9$conf.int[2],
+                             noschool$conf.int[2],
+                             grade5$conf.int[2],
+                             grade4$conf.int[2],
+                             nursery_preschool$conf.int[2],
+                             grade_3$conf.int[2],
+                             grade_1$conf.int[2],
+                             kindergarten$conf.int[2],
+                             grade_2$conf.int[2]))
+knitr::kable(shares, caption = "Proportions and 95-percent confidence intervals")
 ```
 
 
