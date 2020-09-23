@@ -1,0 +1,924 @@
+---
+title: "Assignment 3"
+author: "Miguel Perez Luna"
+date: "9/20/2020"
+output: 
+  html_document:
+    theme: cosmo
+    toc: true
+    toc_depth: 3
+    toc_float: true
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+```
+
+```{r load libraries}
+library(tidyverse)
+library(ggplot2)
+```
+
+Before starting, I am loading the person-level data I created, and I am going to recode some variables to make labeling axes easier later on.
+
+```{r}
+transpo_data <- read.csv("transpo_data.csv") %>%
+  mutate(meansTW = case_when(
+    JWTR_label=="Bicycle"~"Bicycle",
+    JWTR_label=="Bus or trolley bus"~"Bus or\ntrolley bus",
+    JWTR_label=="Car, truck, or van"~"Car, truck,\nor van",
+    JWTR_label=="Motorcycle"~"Motorcycle",
+    JWTR_label=="Other method"~"Other",
+    JWTR_label=="Railroad"~"Railroad",
+    JWTR_label=="Streetcar or trolley car (carro publico in Puerto Rico)"~"Streetcar or\ntrolley car",
+    JWTR_label=="Subway or elevated"~"Subway or\nelevated",
+    JWTR_label=="Taxicab"~"Taxicab",
+    JWTR_label=="Walked"~"Walk")) %>%
+  mutate(edu = case_when(
+    SCHL_label=="Some college, but less than 1 year"~"<1 year of college",
+    SCHL_label=="Regular high school diploma"~"High school diploma",
+    SCHL_label=="Bachelor's degree"~"Bachelor's degree",
+    SCHL_label=="1 or more years of college credit, no degree"~"> 1 yr of college,\nno degree",
+    SCHL_label=="Master's degree"~"Master's degree",
+    SCHL_label=="GED or alternative credential"~"GED",
+    SCHL_label=="Doctorate degree"~"Doctorate degree",
+    SCHL_label=="Associate's degree"~"Associate's degree",
+    SCHL_label=="Grade 8"~"Grade 8",
+    SCHL_label=="Grade 7"~"Grade 7",
+    SCHL_label=="Grade 10"~"Grade 10",
+    SCHL_label=="12th grade - no diploma"~"12th grade -\nno diploma",
+    SCHL_label=="Grade 6"~"Grade 6",
+    SCHL_label=="Grade 11"~"Grade 11",
+    SCHL_label=="Professional degree beyond a bachelor's degree"~"Professional degree",
+    SCHL_label=="Grade 9"~"Grade 9",
+    SCHL_label=="No schooling completed"~"No schooling",
+    SCHL_label=="Grade 5"~"Grade 5",
+    SCHL_label=="Grade 4"~"Grade 4",
+    SCHL_label=="Nursery school, preschool"~"Preschool",
+    SCHL_label=="Grade 3"~"Grade 3",
+    SCHL_label=="Grade 1"~"Grade 1",
+    SCHL_label=="Kindergarten"~"Kindergarten",
+    SCHL_label=="Grade 2"~"Grade 2"))
+
+```
+
+In this assignment, I had 5 continuous variables, 1 binary categorical variable, and 2 categorical variables, one with 10 unique categories and the other with 24 unique categories. This means that I ran 10 Pearson's correlation tests, 5 2-sample t-tests, 10 ANOVA tests, and 3 chi-square tests.
+
+
+My sample size remains the same as my last assignment: 6914 people in Colorado who pay rent, and spend time commuting to work. 
+
+# Relationships between two continuous variables
+
+
+### Number of Vehicles and Income
+
+```{r}
+veh_inc_correlation <- cor.test(transpo_data$vehicle, transpo_data$PINCP)
+
+veh_inc_correlation
+```
+
+
+``` {r}
+options(scipen = 999)
+ggplot(transpo_data, aes(x = PINCP, y = vehicle)) +
+  geom_point(size = 0.5, alpha = 0.25, position = "jitter") +
+  geom_smooth() +
+  theme_bw() +
+  scale_x_continuous(name = "Income") +
+  scale_y_continuous(name = "Number of Vehicles Accessible", 
+                     breaks = seq(0, 6, by = 1),
+                     labels = paste(prettyNum(seq(0, 6, by = 1),
+                                              big.mark = ","))) +
+  annotate(geom = "text", x = 0, y = 7, 
+           label = paste("Correlation (95-percent confidence):",
+                         prettyNum(veh_inc_correlation$conf.int[1], digits = 2), 
+                         "to",
+                         prettyNum(veh_inc_correlation$conf.int[2], digits = 2)),
+           hjust = 0)
+  
+```
+
+The correlation between income and number of vehicles accessible is surprisingly weak with an r-value of -0.04564493 , but still statistically significant (p = 0.0001466). This could be driven by the fact that some of the outliers in the income variable report having access to only 1 or 2 vehicles. It's also possible that regardless of how much income one earns, most homes in the Northern Colorado area only have one- to two-car garages. 
+
+### Number of Vehicles and Travel Time to Work
+
+```{r}
+veh_time_correlation <- cor.test(transpo_data$vehicle, transpo_data$JWMNP)
+
+veh_time_correlation
+```
+
+
+``` {r}
+options(scipen = 999)
+ggplot(transpo_data, aes(x = JWMNP, y = vehicle)) +
+  geom_point(size = 0.5, alpha = 0.25, position = "jitter") +
+  geom_smooth() +
+  theme_bw() +
+  scale_x_continuous(name = "Travel Time to Work") +
+  scale_y_continuous(name = "Number of Vehicles Accessible", 
+                     breaks = seq(0, 6, by = 1),
+                     labels = paste(prettyNum(seq(0, 6, by = 1),
+                                              big.mark = ","))) +
+  annotate(geom = "text", x = 0, y = 7, 
+           label = paste("Correlation (95-percent confidence):",
+                         prettyNum(veh_time_correlation$conf.int[1], digits = 2), 
+                         "to",
+                         prettyNum(veh_time_correlation$conf.int[2], digits = 2)),
+           hjust = 0)
+  
+```
+
+The correlation between travel time to work and number of vehicles accessible is weak, with an r-value of 0.03120635. It is statistically significant, though (p = 0.009459).
+
+### Number of Vehicles and Gross Rent
+
+```{r}
+veh_rent_correlation <- cor.test(transpo_data$vehicle, transpo_data$GRNTP)
+
+veh_rent_correlation
+```
+
+``` {r}
+options(scipen = 999)
+ggplot(transpo_data, aes(x = GRNTP, y = vehicle)) +
+  geom_point(size = 0.5, alpha = 0.25, position = "jitter") +
+  geom_smooth() +
+  theme_bw() +
+  scale_x_continuous(name = "Gross Rent") +
+  scale_y_continuous(name = "Number of Vehicles Accessible", 
+                     breaks = seq(0, 6, by = 1),
+                     labels = paste(prettyNum(seq(0, 6, by = 1),
+                                              big.mark = ","))) +
+  annotate(geom = "text", x = 0, y = 7, 
+           label = paste("Correlation (95-percent confidence):",
+                         prettyNum(veh_rent_correlation$conf.int[1], digits = 2), 
+                         "to",
+                         prettyNum(veh_rent_correlation$conf.int[2], digits = 2)),
+           hjust = 0)
+  
+```
+
+
+This correlation is the strongest one I've found yet, with an r-value of 0.2949471. It is also statistically significant. It's interesting to note that the trend line increases until about a rent of $3000, after which it decreases.
+
+### Number of Vehicles and Age
+
+```{r}
+veh_age_correlation <- cor.test(transpo_data$vehicle, transpo_data$AGEP)
+
+veh_age_correlation
+```
+
+
+``` {r}
+options(scipen = 999)
+ggplot(transpo_data, aes(x = AGEP, y = vehicle)) +
+  geom_point(size = 0.5, alpha = 0.25, position = "jitter") +
+  geom_smooth() +
+  theme_bw() +
+  scale_x_continuous(name = "Age") +
+  scale_y_continuous(name = "Number of Vehicles Accessible", 
+                     breaks = seq(0, 6, by = 1),
+                     labels = paste(prettyNum(seq(0, 6, by = 1),
+                                              big.mark = ","))) +
+  annotate(geom = "text", x = 0, y = 7, 
+           label = paste("Correlation (95-percent confidence):",
+                         prettyNum(veh_age_correlation$conf.int[1], digits = 2), 
+                         "to",
+                         prettyNum(veh_age_correlation$conf.int[2], digits = 2)),
+           hjust = 0)
+  
+```
+
+This correlation is weak with an r-value of -0.1244448. It is still statistically significant. The trend line suggests a general decline in the number of vehicles accessible as age increases, which makes some sense since senior citizens might choose to drive less as they get older.  
+
+### Income and Travel Time to Work
+
+```{r}
+income_time_correlation <- cor.test(transpo_data$PINCP, transpo_data$JWMNP)
+
+income_time_correlation
+```
+
+``` {r}
+options(scipen = 999)
+ggplot(transpo_data, aes(x = PINCP, y = JWMNP)) +
+  geom_point(size = 0.5, alpha = 0.25, position = "jitter") +
+  geom_smooth() +
+  theme_bw() +
+  scale_x_continuous(name = "Income") +
+  scale_y_continuous(name = "Travel Time to Work in Minutes") +
+  annotate(geom = "text", x = 0, y = 170, 
+           label = paste("Correlation (95-percent confidence):",
+                         prettyNum(income_time_correlation$conf.int[1], digits = 2), 
+                         "to",
+                         prettyNum(income_time_correlation$conf.int[2], digits = 2)),
+           hjust = 0)
+  
+```
+
+This correlation is weak (r = 0.03854865) though still statistically significant (p = 0.001346). The trendline is almost exactly flat, which means that a change in income does not necessarily predict a change in travel time to work. 
+
+### Income and Gross Rent
+
+```{r}
+income_rent_correlation <- cor.test(transpo_data$PINCP, transpo_data$GRNTP)
+
+income_rent_correlation
+```
+
+``` {r}
+options(scipen = 999)
+ggplot(transpo_data, aes(x = PINCP, y = GRNTP)) +
+  geom_point(size = 0.5, alpha = 0.25, position = "jitter") +
+  geom_smooth() +
+  theme_bw() +
+  scale_x_continuous(name = "Income") +
+  scale_y_continuous(name = "Gross Rent") +
+  annotate(geom = "text", x = 0, y = 4300, 
+           label = paste("Correlation (95-percent confidence):",
+                         prettyNum(income_rent_correlation$conf.int[1], digits = 2), 
+                         "to",
+                         prettyNum(income_rent_correlation$conf.int[2], digits = 2)),
+           hjust = 0)
+  
+```
+
+This correlation is fairly weak, though stronger than several of the ones I've found so far (r = 0.2434633). It is also statistically significant (p < 2.2e-16). This general relationship should be somewhat expected: the higher your income, the higher rent you can afford.
+
+### Income and Age
+
+```{r}
+income_age_correlation <- cor.test(transpo_data$PINCP, transpo_data$AGEP)
+
+income_age_correlation
+```
+
+``` {r}
+options(scipen = 999)
+ggplot(transpo_data, aes(x = AGEP, y = PINCP)) +
+  geom_point(size = 0.5, alpha = 0.25, position = "jitter") +
+  geom_smooth() +
+  theme_bw() +
+  scale_x_continuous(name = "AGE") +
+  scale_y_continuous(name = "INCOME",
+                     breaks = seq(0, 600000, by = 100000)) +
+  annotate(geom = "text", x = 0, y = 550000, 
+           label = paste("Correlation (95-percent confidence):",
+                         prettyNum(income_age_correlation$conf.int[1], digits = 2), 
+                         "to",
+                         prettyNum(income_age_correlation$conf.int[2], digits = 2)),
+           hjust = 0)
+  
+```
+
+This correlation is fairly weak (r = 0.2041702), though it is statistically significant. The general trend makes some sense: it's expected that one's income will grow as they get older. 
+
+### Travel time to work and Gross Rent
+
+```{r}
+time_rent_correlation <- cor.test(transpo_data$GRNTP, transpo_data$JWMNP)
+
+time_rent_correlation
+```
+
+``` {r}
+options(scipen = 999)
+ggplot(transpo_data, aes(x = GRNTP, y = JWMNP)) +
+  geom_point(size = 0.5, alpha = 0.25, position = "jitter") +
+  geom_smooth() +
+  theme_bw() +
+  scale_x_continuous(name = "Gross Rent") +
+  scale_y_continuous(name = "Travel Time to Work in Minutes") +
+  annotate(geom = "text", x = 0, y = 170, 
+           label = paste("Correlation (95-percent confidence):",
+                         prettyNum(time_rent_correlation$conf.int[1], digits = 2), 
+                         "to",
+                         prettyNum(time_rent_correlation$conf.int[2], digits = 2)),
+           hjust = 0)
+  
+```
+
+This correlation is weak (r = 0.05341915) though still statistically significant (p < 0.5). The trendline is almost exactly flat, which means that a change in rent does not necessarily predict a change in travel time to work. 
+
+### Travel time to work and Age
+
+```{r}
+time_age_correlation <- cor.test(transpo_data$AGEP, transpo_data$JWMNP)
+
+time_age_correlation
+```
+
+``` {r}
+options(scipen = 999)
+ggplot(transpo_data, aes(x = AGEP, y = JWMNP)) +
+  geom_point(size = 0.5, alpha = 0.25, position = "jitter") +
+  geom_smooth() +
+  theme_bw() +
+  scale_x_continuous(name = "Age") +
+  scale_y_continuous(name = "Travel Time to Work in Minutes") +
+  annotate(geom = "text", x = 0, y = 170, 
+           label = paste("Correlation (95-percent confidence):",
+                         prettyNum(time_age_correlation$conf.int[1], digits = 2), 
+                         "to",
+                         prettyNum(time_age_correlation$conf.int[2], digits = 2)),
+           hjust = 0)
+  
+```
+
+This correlation is weak (r = 0.04117806) though still statistically significant (p = 0.0006152). The trendline is almost exactly flat, which means that a change in age does not necessarily predict a change in travel time to work. 
+
+### Age and Rent
+
+```{r}
+age_rent_correlation <- cor.test(transpo_data$AGEP, transpo_data$GRNTP)
+
+age_rent_correlation
+```
+
+``` {r}
+options(scipen = 999)
+ggplot(transpo_data, aes(x = AGEP, y = GRNTP)) +
+  geom_point(size = 0.5, alpha = 0.25, position = "jitter") +
+  geom_smooth() +
+  theme_bw() +
+  scale_x_continuous(name = "Age") +
+  scale_y_continuous(name = "Rent") +
+  annotate(geom = "text", x = 0, y = 5000, 
+           label = paste("Correlation (95-percent confidence):",
+                         prettyNum(age_rent_correlation$conf.int[1], digits = 2), 
+                         "to",
+                         prettyNum(age_rent_correlation$conf.int[2], digits = 2)),
+           hjust = 0)
+  
+```
+
+This correlation is weak (r = -0.06075605) though still statistically significant (p < 0.05). The trendline is almost flat, with a slight decrease, which might suggest (not robustly) that as one gets older, they pay less for rent.
+
+# Relationship between a continuous variable and a binary variable
+
+### Sex and Number of Vehicles Accessible
+
+By running this two sample t-test, I am attempting to answer: do males have access to more vehicles than females do?
+
+``` {r}
+veh_difference = t.test(vehicle ~ SEX_label == "Male",
+                    data = transpo_data)
+veh_difference
+```
+
+Males generally have access to more vehicles than females do. Males generally have access to 1.97 cars while females generally have access to 1.88 cars. This is statistically significant (p = 0.0006293). We can visualize this result with a box plot. 
+
+``` {r box plot}
+ggplot(transpo_data, aes(x = SEX_label, y = vehicle)) +
+  geom_boxplot() +
+  theme_bw() +
+  scale_x_discrete(name = "Sex",
+                   labels = c("Female", "Male")) +
+   scale_y_continuous(name = "Number of Vehicles Accessible", 
+                     breaks = seq(0, 6, by = 1),
+                     labels = paste(prettyNum(seq(0, 6, by = 1),
+                                              big.mark = ","))) +
+  annotate(geom = "text", x = 1.5, y = 3, size = 3,
+           label = paste("Difference in means\n(95% confidence):\n",
+                         prettyNum(abs(veh_difference$conf.int[2]), 
+                                   digits = 3), " to ",
+                         prettyNum(abs(veh_difference$conf.int[1]), 
+                                   digits = 3),
+                         sep = "")) +
+  annotate(geom = "text", x = 1, y = veh_difference$estimate[1], size = 3,
+           label = paste("Mean (95% confidence):",
+                         prettyNum(veh_difference$estimate[1], digits = 3))) +
+  annotate(geom = "text", x = 2, y = veh_difference$estimate[2], size = 3,
+           label = paste("Mean (95% confidence):",
+                         prettyNum(veh_difference$estimate[2], digits = 3)))
+```
+
+Although the difference in mean number of vehicles accessible by sex is statistically significant, it's practically not interesting since you can only have whole cars. Either value would likely be rounded up to 2 for practical purposes. 
+
+
+### Sex and Income
+
+By running this two sample t-test, I am attempting to answer: do males earn a higher income than females?
+
+``` {r}
+income_difference = t.test(PINCP ~ SEX_label == "Male",
+                    data = transpo_data)
+income_difference
+```
+
+Males generally earn a higher income than females do. Males, on average, earn 47,911.19 dollars while females earn 36,613.52 dollars. This is statistically significant (p < 0.05). We can visualize this result with a violin plot. 
+
+``` {r}
+ggplot(transpo_data, aes(x = SEX_label, y = PINCP)) +
+  geom_violin() +
+  theme_bw() +
+  scale_x_discrete(name = "Sex",
+                   labels = c("Female", "Male")) +
+   scale_y_continuous(name = "Income", 
+                     breaks = seq(0, 500000, by = 50000),
+                     labels = paste("$", 
+                                    prettyNum(seq(0, 500000, by = 50000),
+                                              big.mark = ","))) +
+  annotate(geom = "text", x = 1.5, y = 250000, size = 3,
+           label = paste("Difference in means\n(95% confidence):\n$",
+                         prettyNum(abs(income_difference$conf.int[2]), 
+                                   digits = 0), " to $",
+                         prettyNum(abs(income_difference$conf.int[1]), 
+                                   digits = 0),
+                         sep = "")) +
+  annotate(geom = "text", x = 1, y = income_difference$estimate[1], size = 3,
+           label = paste("Mean (95% confidence):\n$",
+                         prettyNum(income_difference$estimate[1], digits = 0))) +
+  annotate(geom = "text", x = 2, y = income_difference$estimate[2], size = 3,
+           label = paste("Mean (95% confidence):\n$",
+                         prettyNum(income_difference$estimate[2], digits = 0)))
+```
+
+With the outliers in the data, the difference in means doesn't appear to be great, but according to the two-sample t-test, we can be about 95% confident that males earn between 9,438 and 13,158 more dollars than females, on average.
+
+### Sex and Travel Time to Work
+
+By running this two sample t-test, I am attempting to answer: do males have a longer travel time to work then females do?
+
+``` {r}
+time_difference = t.test(JWMNP ~ SEX_label == "Male",
+                    data = transpo_data)
+time_difference
+```
+
+Though just by little, males generally travel for a longer time than females when going to work. Males, on average, take 25.89 minutes to get to work, while females take 23.49 minutes to get to work. This is statistically significant (p < 0.05). We can visualize this result with a violin plot. 
+
+``` {r}
+ggplot(transpo_data, aes(x = SEX_label, y = JWMNP)) +
+  geom_violin() +
+  theme_bw() +
+  scale_x_discrete(name = "Sex",
+                   labels = c("Female", "Male")) +
+   scale_y_continuous(name = "Travel time to work in minutes", 
+                     breaks = seq(0, 150, by = 15),
+                     labels = paste(prettyNum(seq(0, 150, by = 15),
+                                              big.mark = ","))) +
+  annotate(geom = "text", x = 1.5, y = 75, size = 3,
+           label = paste("Difference in means\n(95% confidence):\n",
+                         prettyNum(abs(time_difference$conf.int[2]), 
+                                   digits = 3), " to ",
+                         prettyNum(abs(time_difference$conf.int[1]), 
+                                   digits = 3),
+                         sep = "")) +
+  annotate(geom = "text", x = 1, y = time_difference$estimate[1], size = 3,
+           label = paste("Mean (95% confidence):\n",
+                         prettyNum(time_difference$estimate[1], digits = 3))) +
+  annotate(geom = "text", x = 2, y = time_difference$estimate[2], size = 3,
+           label = paste("Mean (95% confidence):\n",
+                         prettyNum(time_difference$estimate[2], digits = 3)))
+```
+With the outliers in the data, the difference in means doesn't appear to be great. Indeed, on average, males only travel for about 2.4 minutes longer than females to work.
+
+### Sex and Rent
+
+By running this two sample t-test, I am attempting to answer: do males payer higher rents then females do?
+
+``` {r}
+rent_difference = t.test(GRNTP ~ SEX_label == "Male",
+                    data = transpo_data)
+rent_difference
+```
+
+The difference in means is not statstically significant (p = 0.2405). This means that while the mean rent for males is 1473.62 and the mean rent for females is 1457.16, we can't be at least 95% confident that this difference didn't just occur by chance. In fact, if we look at a violin plot, we can see that the distributions and means are almost identical. 
+
+``` {r}
+ggplot(transpo_data, aes(x = SEX_label, y = GRNTP)) +
+  geom_violin() +
+  theme_bw() +
+  scale_x_discrete(name = "Sex",
+                   labels = c("Female", "Male")) +
+   scale_y_continuous(name = "Rent", 
+                     breaks = seq(0, 5000, by = 500),
+                     labels = paste("$", 
+                                    prettyNum(seq(0, 5000, by = 500),
+                                              big.mark = ","))) +
+  annotate(geom = "text", x = 1.5, y = 2500, size = 3,
+           label = paste("Difference in means:\n$",
+                         prettyNum(abs(rent_difference$conf.int[2]), 
+                                   digits = 0), " to $",
+                         prettyNum(abs(rent_difference$conf.int[1]), 
+                                   digits = 0),
+                         sep = "")) +
+  annotate(geom = "text", x = 1, y = rent_difference$estimate[1], size = 3,
+           label = paste("Mean:\n$",
+                         prettyNum(rent_difference$estimate[1], digits = 0))) +
+  annotate(geom = "text", x = 2, y = rent_difference$estimate[2], size = 3,
+           label = paste("Mean:\n$",
+                         prettyNum(rent_difference$estimate[2], digits = 0)))
+```
+
+### Sex and Age
+
+By running this two sample t-test, I am attempting to answer: are males older than females? I have a strong suspicion that this difference in means will not be statistically significant. 
+
+``` {r}
+age_difference = t.test(AGEP ~ SEX_label == "Male",
+                    data = transpo_data)
+age_difference
+```
+
+As I predicted, the difference in means of ages between males and females is not statistically significant (p = 0.6138). We cannot be at least 95% sure that the difference didn't just occur by chance. This makes sense, as nowadays sex (at least in aggregate - this likely is different if we examine sex and race or sex and socioeconomic status) doesn't necessarily affect how old one grows to be. 
+
+# Relationship between a continuous variable and a categorical variable (with three or more levels)
+
+### Means of transportation to work and Number of Accessible Vehicles
+
+To see if there's a statistically significant association between the number of vehicles one has access to and one's means of transportation, we can do an analysis of variance. 
+
+``` {r}
+means_veh_anova <- aov(vehicle ~ meansTW, data = transpo_data)
+
+summary(means_veh_anova)
+```
+
+The p-value is much less than 0.05, so we can be 95% confident that there is a significant association between the means of transportation one takes to work and the number of vehicles one has access to. Tukey's Honestly Significant Difference test shows us the magnitude of the differences among the different categories. 
+
+``` {r}
+means_veh_differences <- TukeyHSD(means_veh_anova)
+
+as_tibble(cbind(pair = row.names(means_veh_differences$meansTW),
+                means_veh_differences$meansTW))
+```
+
+We can visualize these differences with a box plot. 
+
+``` {r}
+ggplot(transpo_data, aes(x = meansTW, y = vehicle)) +
+  geom_boxplot() +
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 90)) +
+  scale_x_discrete(name = "Means of Transportation to Work") +
+  scale_y_continuous(name = "Number of Accessible Vehicles", 
+                     breaks = seq(0, 6, by = 1),
+                     labels = paste(prettyNum(seq(0, 6, by = 1))))
+  
+```
+
+I find it interesting that the Bus or Trolley Bus category has the largest distribution of accessible vehicles. I also find it interesting that the Motorcycle category also has a larger distribution than the Car, truck, or van category. 
+
+### Means of transportation to work and Income
+
+``` {r}
+means_income_anova <- aov(PINCP ~ meansTW, data = transpo_data)
+
+summary(means_income_anova)
+```
+
+Since the p-value is less than 0.05, we can be 95% confident that there is a significant association between the means of transportation one takes to work and one's income. Tukey's Honestly Significant Difference test shows us the magnitude of the differences among the different categories. 
+
+``` {r}
+means_income_differences <- TukeyHSD(means_income_anova)
+
+as_tibble(cbind(pair = row.names(means_income_differences$meansTW),
+                means_income_differences$meansTW))
+```
+
+I can also represent these differences with a violin plot. 
+
+``` {r}
+ggplot(transpo_data, aes(x = meansTW, y = PINCP)) +
+  geom_violin() +
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 90)) +
+  scale_x_discrete(name = "Means of Transportation to Work") +
+  scale_y_continuous(name = "Income", 
+                     breaks = seq(0, 500000, by = 50000),
+                     labels = paste("$", 
+                                    prettyNum(seq(0, 500000, by = 50000),
+                                              big.mark = ",")))
+  
+```
+
+I find it interesting that the few outliers that exist in the data set are not only found in the Car, truck, or van category (which makes sense, given that private vehicles are relatively expensive), but they are also found in the Bus or trolley bus and Walk categories (which are fairly cheap or free).
+
+### Means of transportation to work and Travel time to work
+
+``` {r}
+means_time_anova <- aov(JWMNP ~ meansTW, data = transpo_data)
+
+summary(means_time_anova)
+```
+
+Since the p-value is less than 0.05, we can be 95% confident that there is a significant association between the means of transportation and the time it takes to get to work. Tukey's Honestly Significant Difference test shows us the magnitude of the differences among the different categories. 
+
+``` {r}
+means_time_differences <- TukeyHSD(means_time_anova)
+
+as_tibble(cbind(pair = row.names(means_time_differences$meansTW),
+                means_time_differences$meansTW))
+```
+
+I can also represent these differences with a box plot. 
+
+``` {r}
+ggplot(transpo_data, aes(x = meansTW, y = JWMNP)) +
+  geom_boxplot() +
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 90)) +
+  scale_x_discrete(name = "Means of Transportation to Work") +
+  scale_y_continuous(name = "Travel Time to Work in Minutes", 
+                     breaks = seq(0, 150, by = 15),
+                     labels = paste(prettyNum(seq(0, 150, by = 15))))
+  
+```
+
+Although the median travel times for cars, trucks, vans, and bicycles are lower than public transportation, they also have several outliers for longer trip times. I suspect the outlier in the walk category might be a mistake. The median travel times are highest for buses, streetcars, and subways. In the state of Colorado, which is where my sample exists, this makes sense bcause our cities are rarely built densely enough so that public transit is actually more efficient than driving. 
+
+### Means of transportation to work and Rent
+
+``` {r}
+means_rent_anova <- aov(GRNTP ~ meansTW, data = transpo_data)
+
+summary(means_rent_anova)
+```
+
+Since the p-value is less than 0.05, we can be 95% confident that there is a significant association between the means of transportation to work and one's rent. Tukey's Honestly Significant Difference test shows us the magnitude of the differences among the different categories. 
+
+``` {r}
+means_rent_differences <- TukeyHSD(means_rent_anova)
+
+as_tibble(cbind(pair = row.names(means_rent_differences$meansTW),
+                means_rent_differences$meansTW))
+```
+
+I can also represent these differences with a box plot. 
+
+``` {r}
+ggplot(transpo_data, aes(x = meansTW, y = GRNTP)) +
+  geom_boxplot() +
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 90)) +
+  scale_x_discrete(name = "Means of Transportation to Work") +
+  scale_y_continuous(name = "Rent", 
+                     breaks = seq(0, 5000, by = 500),
+                     labels = paste("$", 
+                                    prettyNum(seq(0, 5000, by = 500),
+                                              big.mark = ",")))
+```
+
+There doesn't appear, visually at least, to be huge differences among the medians. However, the Car, truck, or van category has the most outliers for highest rents. Interestingly the highest median rent is in the railroad category.
+
+### Means of transportation to work and Age
+
+``` {r}
+means_age_anova <- aov(AGEP ~ meansTW, data = transpo_data)
+
+summary(means_age_anova)
+```
+
+Since the p-value is less than 0.05, we can be 95% confident that there is a significant association between the means of transportation to work and one's age. Tukey's Honestly Significant Difference test shows us the magnitude of the differences among the different categories. 
+
+``` {r}
+means_age_differences <- TukeyHSD(means_age_anova)
+
+as_tibble(cbind(pair = row.names(means_age_differences$meansTW),
+                means_age_differences$meansTW))
+```
+
+I can also represent this with a violin plot. 
+
+``` {r}
+ggplot(transpo_data, aes(x = meansTW, y = AGEP)) +
+  geom_violin() +
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 90)) +
+  scale_x_discrete(name = "Means of Transportation to Work") +
+  scale_y_continuous(name = "Age", 
+                     breaks = seq(0, 90, by = 10),
+                     labels = paste(prettyNum(seq(0, 90, by = 10))))
+  
+```
+
+The greatest spread of ages exists in the car, truck, or van category. It seems that generally, the mean ages are higher for the streetcar, railroad, and car, truck, or van categories.
+
+### Educational Attainment and Number of Accessible Vehicles
+
+``` {r}
+ed_veh_anova <- aov(vehicle ~ edu, data = transpo_data)
+
+summary(ed_veh_anova)
+```
+
+Since the p-value is less than 0.05, we can be 95% confident that there is a significant association between one's educational attainment and the number of accessible vehicles. Tukey's Honestly Significant Difference test shows us the magnitude of the differences among the different categories. 
+
+``` {r}
+ed_veh_differences <- TukeyHSD(ed_veh_anova)
+
+as_tibble(cbind(pair = row.names(ed_veh_differences$edu),
+                ed_veh_differences$edu))
+```
+
+I can also represent this with a box plot. 
+
+``` {r}
+ggplot(transpo_data, aes(x = edu, y = vehicle)) +
+  geom_boxplot() +
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 90)) +
+  scale_x_discrete(name = "Educational Attainment") +
+  scale_y_continuous(name = "Number of Accessible Vehicles", 
+                     breaks = seq(0, 6, by = 1),
+                     labels = paste(prettyNum(seq(0, 6, by = 1))))
+  
+```
+
+For some odd reason, people who only ever went to school through grade 4 have the highest median number of cars. According to my dataset, only 3 people in my entire sample only completed school through grade 4, so those three people alone are making it appear that people who only completed school through 4th grade might have access to more cars than most people. 
+
+### Educational Attainment and Income
+
+``` {r}
+ed_income_anova <- aov(PINCP ~ edu, data = transpo_data)
+
+summary(ed_income_anova)
+```
+
+Since the p-value is less than 0.05, we can be 95% confident that there is a significant association between one's educational attainment and their income. Tukey's Honestly Significant Difference test shows us the magnitude of the differences among the different categories. 
+
+``` {r}
+ed_income_differences <- TukeyHSD(ed_income_anova)
+
+as_tibble(cbind(pair = row.names(ed_income_differences$edu),
+                ed_income_differences$edu))
+```
+
+I can represent this with a violin plot.
+
+``` {r}
+ggplot(transpo_data, aes(x = edu, y = PINCP)) +
+  geom_violin() +
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 90)) +
+  scale_x_discrete(name = "Educational Attainment") +
+  scale_y_continuous(name = "Income", 
+                     breaks = seq(0, 500000, by = 50000),
+                     labels = paste("$", 
+                                    prettyNum(seq(0, 500000, by = 50000),
+                                              big.mark = ",")))
+  
+```
+
+Interestingly the No Schooling category reaches quite high, and even higher than most of the grades. It seems that outliers are pulling the mean incomes of several variables up, including those who went to college for more than a year but earned no degree, those who finished 12th grade but without a high school diploma, those who have bachelor's degrees, high school diplomas, master's degrees, and professional degrees. 
+
+### Educational Attainment and Travel Time to Work 
+
+``` {r}
+ed_time_anova <- aov(JWMNP ~ edu, data = transpo_data)
+
+summary(ed_time_anova)
+```
+
+Since the p-value is greater than 0.05, we can be at least 95% confident that there is a significant association between one's educational attainment and their travel time to work.
+
+### Educational Attainment and Rent
+
+``` {r}
+ed_rent_anova <- aov(GRNTP ~ edu, data = transpo_data)
+
+summary(ed_rent_anova)
+```
+
+Since the p-value is less than 0.05, we can be 95% confident that there is a significant association between one's educational attainment and their monthly rent. Tukey's Honestly Significant Difference test shows us the magnitude of the differences among the different categories. 
+
+``` {r}
+ed_rent_differences <- TukeyHSD(ed_rent_anova)
+
+as_tibble(cbind(pair = row.names(ed_rent_differences$edu),
+                ed_rent_differences$edu))
+```
+I can represent these differences with a box plot. 
+
+``` {r}
+ggplot(transpo_data, aes(x = edu, y = GRNTP)) +
+  geom_boxplot() +
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 90)) +
+  scale_x_discrete(name = "Educational Attainment") +
+  scale_y_continuous(name = "Rent", 
+                     breaks = seq(0, 5000, by = 500),
+                     labels = paste("$", 
+                                    prettyNum(seq(0, 5000, by = 500),
+                                              big.mark = ",")))
+```
+
+The lowest median rent belongs to the preschool category, but it turns out there is only one person in my dataset who only ever finished preschool. The highest median rents tend to be found in the higher education degrees: Bachelor's, Master's, Doctorates, and other professional degrees. So - if anything, my MUP degree means I'll end up paying higher rent than others! I am just kidding, of course.
+
+### Educational Attainment and Age
+
+``` {r}
+ed_age_anova <- aov(AGEP ~ edu, data = transpo_data)
+
+summary(ed_age_anova)
+```
+
+Since the p-value is less than 0.05, we can be 95% confident that there is a significant association between one's educational attainment and their age. Tukey's Honestly Significant Difference test shows us the magnitude of the differences among the different categories. 
+
+``` {r}
+ed_age_differences <- TukeyHSD(ed_age_anova)
+
+as_tibble(cbind(pair = row.names(ed_age_differences$edu),
+                ed_age_differences$edu))
+```
+
+I can represent these differences with a violin plot.
+
+``` {r}
+ggplot(transpo_data, aes(x = edu, y = AGEP)) +
+  geom_violin() +
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 90)) +
+  scale_x_discrete(name = "Educational Attainment") +
+  scale_y_continuous(name = "Age", 
+                     breaks = seq(0, 90, by = 10),
+                     labels = paste(prettyNum(seq(0, 90, by = 10))))
+  
+```
+
+The shape of the Grade 3 distribution is interesting to me, though it appears there are only 3 people in my data set who only ever completed Grade 3. Despite the differences in age by educational attainment, I don't think this data necessarily highlights any interesting trends. 
+
+
+# Relationship between two categorical variables
+
+### Sex and Means of Transportation to Work
+
+By running this Chi-square test, I am attempting to answer: is there a relationship between one's sex and their means of transportation to work?
+
+``` {r}
+sex_means_chi_sq <- chisq.test(transpo_data$meansTW, transpo_data$SEX_label == "Male") 
+
+sex_means_chi_sq
+```
+
+The p-value is less than 0.05, so the relationship is significant at a 95% confidence interval. These are the values observed for each combination of variables.
+
+``` {r}
+sex_means_chi_sq$observed
+```
+
+And here are the values we would expect if the two variables were not related. 
+
+``` {r}
+sex_means_chi_sq$expected
+```
+
+### Sex and Educational Attainment
+
+By running this Chi-square test, I am attempting to answer: is there a relationship between one's sex and their educational attainment?
+
+``` {r}
+sex_edu_chi_sq <- chisq.test(transpo_data$edu, transpo_data$SEX_label == "Male") 
+
+sex_edu_chi_sq
+```
+
+The p-value is less than 0.05, so the relationship is significant at a 95% confidence interval. These are the values observed for each combination of variables.
+
+``` {r}
+sex_edu_chi_sq$observed
+```
+
+And here are the values we would expect if the two variables were not related. 
+
+``` {r}
+sex_edu_chi_sq$expected
+```
+
+
+### Educational Attainment and Means of Transportation to Work
+
+By running this Chi-square test, I am attempting to answer: is there a relationship between one's educational attainment and whether they take a car, truck, or van to work?
+
+``` {r}
+edu_means_chi_sq <- chisq.test(transpo_data$edu, transpo_data$meansTW) 
+
+edu_means_chi_sq
+```
+
+The p-value is far greater than 0.05, so the relationship is not statistically significant at a 95% confidence interval. These are the values observed for each combination of variables.
+
+``` {r}
+edu_means_chi_sq$observed
+```
+
+And these are the expected values.
+
+``` {r}
+edu_means_chi_sq$expected
+```
+
+
+
+
+
+
+
+
+
+
