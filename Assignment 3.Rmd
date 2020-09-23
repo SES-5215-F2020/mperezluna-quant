@@ -1,6 +1,6 @@
 ---
 title: "Assignment 3"
-author: "Miguel Perez Luna"
+author: "Miguel Perez-Luna"
 date: "9/20/2020"
 output: 
   html_document:
