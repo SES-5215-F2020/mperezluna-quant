@@ -475,6 +475,7 @@ shares <- tibble('Means of Travel' = c("Car, Truck, or Van",
 knitr::kable(shares, caption = "Proportions and 95-percent confidence intervals")
 ```
 
+
 ### Educational Attainmnet
 
 ```{r}

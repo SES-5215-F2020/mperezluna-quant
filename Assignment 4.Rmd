@@ -1,0 +1,204 @@
+---
+title: "Assignment 4"
+author: "Miguel Perez Luna"
+date: "9/24/2020"
+output:
+  html_document:
+    theme: cosmo
+    toc: yes
+    toc_depth: 3
+    toc_float: yes
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r load libraries}
+library(tidyverse)
+```
+
+Before running my linear regression, I manipulated two of my categorical variables. 
+
+In my Means of Transportation to Work variable, I mutated the "Car, Truck, or Van" value to "1Car, Truck, or Van" so that all other values get compared to whether or not someone takes a car, truck, or van to work.
+
+In my Educational Attainment variable, I mutated the "Regular high school diploma" value to "1High School Diploma" so that all other vlaues get compared to whether or not someone's highest educational attainemnt is a high school diploma.
+
+```{r}
+transpo_data <- read.csv("transpo_data.csv") %>%
+  mutate(meansTW = case_when(
+    JWTR_label=="Bicycle"~"Bicycle",
+    JWTR_label=="Bus or trolley bus"~"Bus or\ntrolley bus",
+    JWTR_label=="Car, truck, or van"~"1Car, truck,\nor van",
+    JWTR_label=="Motorcycle"~"Motorcycle",
+    JWTR_label=="Other method"~"Other",
+    JWTR_label=="Railroad"~"Railroad",
+    JWTR_label=="Streetcar or trolley car (carro publico in Puerto Rico)"~"Streetcar or\ntrolley car",
+    JWTR_label=="Subway or elevated"~"Subway or\nelevated",
+    JWTR_label=="Taxicab"~"Taxicab",
+    JWTR_label=="Walked"~"Walk")) %>%
+  mutate(edu = case_when(
+    SCHL_label=="Some college, but less than 1 year"~"Less 1 year of college",
+    SCHL_label=="Regular high school diploma"~"1High school diploma",
+    SCHL_label=="Bachelor's degree"~"Bachelor's degree",
+    SCHL_label=="1 or more years of college credit, no degree"~"More 1 yr of college,\nno degree",
+    SCHL_label=="Master's degree"~"Master's degree",
+    SCHL_label=="GED or alternative credential"~"GED",
+    SCHL_label=="Doctorate degree"~"Doctorate degree",
+    SCHL_label=="Associate's degree"~"Associate's degree",
+    SCHL_label=="Grade 8"~"Grade 8",
+    SCHL_label=="Grade 7"~"Grade 7",
+    SCHL_label=="Grade 10"~"Grade 10",
+    SCHL_label=="12th grade - no diploma"~"Grade 12 -\nno diploma",
+    SCHL_label=="Grade 6"~"Grade 6",
+    SCHL_label=="Grade 11"~"Grade 11",
+    SCHL_label=="Professional degree beyond a bachelor's degree"~"Professional degree",
+    SCHL_label=="Grade 9"~"Grade 9",
+    SCHL_label=="No schooling completed"~"No schooling",
+    SCHL_label=="Grade 5"~"Grade 5",
+    SCHL_label=="Grade 4"~"Grade 4",
+    SCHL_label=="Nursery school, preschool"~"Preschool",
+    SCHL_label=="Grade 3"~"Grade 3",
+    SCHL_label=="Grade 1"~"Grade 1",
+    SCHL_label=="Kindergarten"~"Kindergarten",
+    SCHL_label=="Grade 2"~"Grade 2"))
+
+```
+
+## Linear Regression
+
+After mutating those few variables, I ran the linear regression to predict Income based on variation in Sex, Means of Transportation to Work, Travel Time to Work, Number of Accessible Vehicles, Rent, and Age.
+
+I included options(scipen = 999) so that all values would be reported in standard notation.
+
+```{r}
+model <- lm(PINCP ~ SEX_label + meansTW + edu + JWMNP + vehicle + GRNTP + AGEP, 
+            data = transpo_data)
+options(scipen = 999)
+summary(model)
+```
+
+## Model Fit
+
+The multiple R-squared value for this model is 0.216, which means that this model predicts about 22% of the variation in Income in this dataset. 
+
+## Statistically Insignificant Variables
+
+Several of the variables in this model do not reach statistical significance at the 95-percent confidence interval because they have p-values that are greater than 0.05.
+
+**For Means of Transportation to Work, the statistically insignificant variables are:**
+
+-Motorcycle
+
+-Railroad
+
+-Streetcar or Trolley Car
+
+-Subway
+
+-Taxicab
+
+-Walking
+
+-Other
+
+**For Educational Attainment, the statistically insignificant variables are:**
+
+-No Schooling
+
+-Preschool
+
+-Kindergarten
+
+-Grade 1
+
+-Grade 2
+
+-Grade 3
+
+-Grade 4
+
+-Grade 5
+
+-Grade 6
+
+-Grade 7
+
+-Grade 8
+
+-Grade 9
+
+-Grade 12, no high school diploma
+
+-GED or alternative high school diploma
+
+## Values of Statistically Significant Individual Model Coefficients
+
+All of the following variables had individual model coefficients that reached statistical significance at the 95-percent confidence interval because they have p-values that are less than 0.05.
+
+**Sex**
+
+The coefficient estimate for Male is 12660.7552. Since this variable is compared to Female, this tells us that on average and controlling for everything else in the model, males will earn $12,660.76 more than females. 
+
+**Means of Transportation to Work**
+
+For means of transportation to work, everything is compared to Car, Truck, or Van. 
+
+The coefficient for Bicycle is -12587.9144. This means that on average and controlling for everything else in the model, individuals who ride a bicycle to work earn $12,587.91 less than those who travel by a Car, Truck, or Van. 
+
+The coefficient for Bus or Trolley Bus is -8378.8701. This means that on average and controlling for everything else in the model, individuals who ride a bicycle to work earn $8,378.87 less than those who travel by a Car, Truck, or Van. 
+
+**Educational Attainment**
+
+For educational attainment, everything is compared to earning just a high school diploma.
+
+The coefficient for Grade 10 is -7968.1836. This means that on average and controlling for everything else in the model, individuals who only complete school through 10th grade earn $7,968.18 less than those who earn a high school diploma.
+
+The coefficient for Grade 11 is -6731.8987. This means that on average and controlling for everything else in the model, individuals who only complete school through 11th grade earn $6,731.90 less than those who earn a high school diploma.
+
+The coefficient for Less than 1 Year of College is 4572.3733. This means that on average and controlling for everything else in the model, individuals who attend college for less than one year earn $4,572.37 more than those who earn just a high school diploma.
+
+The coefficient for At Least 1 Year of College but No Degree is 2966.3574. This means that on average and controlling for everything else in the model, individuals who attend college for at least one year but never earn a degree earn $2,966.36 more than those who earn just a high school diploma. It's interesting, to me why this number would be lower thatn those who attend college for less than a year. The sample size of those who attended college for at least a year is larger than those who attended less than one year, so perhaps that reflects a more accurate variation in eventual income. 
+
+The coefficient for Associate's Degree is 5033.8675. This means that on average and controlling for everything else in the model, individuals who earn an Associate's degree earn $5,033.87 more than those who earn just a high school diploma.
+
+The coefficient for Bachelor's Degree is 18153.2293. This means that on average and controlling for everything else in the model, individuals who earn a bachelor's degree earn $18,153.23 more than those who earn just a high school diploma.
+
+The coefficient for Master's Degree is 25879.3543. This means that on average and controlling for everything else in the model, individuals who earn a master's degree earn $25,879.35 more than those who earn just a high school diploma. This bodes well for my future!
+
+The coefficient for Professional Degree (beyond a bachelor's) is 62647.4429. This means that on average and controlling for everything else in the model, individuals who earn a professional degree earn $62,647.44 more than those who earn just a high school diploma. 
+
+The coefficient for Doctorate Degree is 25053.5591. This means that on average and controlling for everything else in the model, individuals who earn a Doctorate degree earn $25,053.56 more than those who earn just a high school diploma.
+
+**Travel Time to Work**
+
+The coefficient for Travel Time to Work is 42.6007. This means that on average and controlling for everything else in the model, individuals earn $42.60 more for every additional minute they travel to work. This is interesting and I wonder how this can be interpreted in a few different ways given the context of Colorado. There are few cities with dense urban cores with high concentrations of jobs in the city. Rather jobs are fairly spread out. In such cities, though, wealthier people might choose to live further from the center in suburbs, which tend to be more expensive. That could explain why a longer travel time is related to higher income. However, this coefficient does suggest that people with lower incomes tend to live closer to their jobs, which I don't think is typically thought of to be the trend in big cities.
+
+**Number of Vehicles Accessible**
+
+The coefficient for Number of Vehicles Accessible is -2917.3641. This means that on average and controlling for everything else in the model, individuals earn $2,917.36 less for every additional vehicle they have access to/own. This is suprising to me, as I would have thought that having more vehicles would mean that you could afford them. 
+
+**Rent**
+
+The coefficient for Rent is 15.2303. This means that on average and controlling for everything else in the model, individuals earn $15.23 more for every additional dollar they spend on rent. 
+
+**Age**
+
+The coefficient for Age is 652.8961. This means that on average and controlling for everything else in the model, individuals earn $652.90 more for every additional year of their life. 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

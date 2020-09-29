@@ -1,13 +1,16 @@
 ---
 title: "Assignment 3"
 author: "Miguel Perez-Luna"
-date: "9/22/2020"
-output: 
+date: "9/20/2020"
+output:
+  pdf_document:
+    toc: yes
+    toc_depth: '3'
   html_document:
     theme: cosmo
-    toc: true
+    toc: yes
     toc_depth: 3
-    toc_float: true
+    toc_float: yes
 ---
 
 ```{r setup, include=FALSE}
