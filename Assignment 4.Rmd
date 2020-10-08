@@ -176,7 +176,7 @@ The coefficient for Travel Time to Work is 42.6007. This means that on average a
 
 **Number of Vehicles Accessible**
 
-The coefficient for Number of Vehicles Accessible is -2917.3641. This means that on average and controlling for everything else in the model, individuals earn $2,917.36 less for every additional vehicle they have access to/own. This is suprising to me, as I would have thought that having more vehicles would mean that you could afford them. 
+The coefficient for Number of Vehicles Accessible is -2917.3641. This means that on average and controlling for everything else in the model, individuals earn $2,917.36 less for every additional vehicle they have access to/own. This is surprising to me, as I would have thought that having more vehicles would mean that you could afford them. 
 
 **Rent**
 

@@ -1,0 +1,247 @@
+---
+title: "Assignment 5"
+author: "Miguel Perez Luna"
+date: "10/5/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r load libraries}
+library(tidyverse)
+library(jtools)
+library(interactions)
+library(knitr)
+```
+
+
+## Reloading my original linear model from Assignment 4
+
+```{r}
+transpo_data <- read.csv("transpo_data.csv") %>%
+  mutate(meansTW = case_when(
+    JWTR_label=="Bicycle"~"Bicycle",
+    JWTR_label=="Bus or trolley bus"~"Bus or\ntrolley bus",
+    JWTR_label=="Car, truck, or van"~"1Car, truck,\nor van",
+    JWTR_label=="Motorcycle"~"Motorcycle",
+    JWTR_label=="Other method"~"Other",
+    JWTR_label=="Railroad"~"Railroad",
+    JWTR_label=="Streetcar or trolley car (carro publico in Puerto Rico)"~"Streetcar or\ntrolley car",
+    JWTR_label=="Subway or elevated"~"Subway or\nelevated",
+    JWTR_label=="Taxicab"~"Taxicab",
+    JWTR_label=="Walked"~"Walk")) %>%
+  mutate(edu = case_when(
+    SCHL_label=="Some college, but less than 1 year"~"Less 1 year of college",
+    SCHL_label=="Regular high school diploma"~"1High school diploma",
+    SCHL_label=="Bachelor's degree"~"Bachelor's degree",
+    SCHL_label=="1 or more years of college credit, no degree"~"More 1 yr of college,\nno degree",
+    SCHL_label=="Master's degree"~"Master's degree",
+    SCHL_label=="GED or alternative credential"~"GED",
+    SCHL_label=="Doctorate degree"~"Doctorate degree",
+    SCHL_label=="Associate's degree"~"Associate's degree",
+    SCHL_label=="Grade 8"~"Grade 8",
+    SCHL_label=="Grade 7"~"Grade 7",
+    SCHL_label=="Grade 10"~"Grade 10",
+    SCHL_label=="12th grade - no diploma"~"Grade 12 -\nno diploma",
+    SCHL_label=="Grade 6"~"Grade 6",
+    SCHL_label=="Grade 11"~"Grade 11",
+    SCHL_label=="Professional degree beyond a bachelor's degree"~"Professional degree",
+    SCHL_label=="Grade 9"~"Grade 9",
+    SCHL_label=="No schooling completed"~"No schooling",
+    SCHL_label=="Grade 5"~"Grade 5",
+    SCHL_label=="Grade 4"~"Grade 4",
+    SCHL_label=="Nursery school, preschool"~"Preschool",
+    SCHL_label=="Grade 3"~"Grade 3",
+    SCHL_label=="Grade 1"~"Grade 1",
+    SCHL_label=="Kindergarten"~"Kindergarten",
+    SCHL_label=="Grade 2"~"Grade 2"))
+
+model <- lm(PINCP ~ SEX_label + meansTW + edu + JWMNP + vehicle + GRNTP + AGEP, 
+            data = transpo_data)
+options(scipen = 999)
+summary(model)
+```
+
+## Model 1: Reconsindering the relationships between my variables
+
+In my linear model from Assignment 4, I examined to what extent each of my variables correlated with Income. I treated Income as my dependent variable, and the rest as independent variables. However, I think Income itself, at least in the set of my variables, can function as an independent variable. 
+
+More precisely, I can see the 'most' independent variables being Sex, Age, and Educational Attainment (of course, other factors can influence educational attainment, but in this case I'm treating this as a fairly 'fixed' variable). I'm assuming that these three have the biggest effect on an individual's Income. Then, I can see how Income can influence an individual's monthly Rent, Number of Vehicles Accessible, and Means of Transportation to work. Lastly, the three of these variables can influence Travel Time to Work. Certainly, any and all of the variables can correlate with Travel Time to Work, but this is the general chain of influence I've thought of. 
+
+To this end, I am going to examine the effect that these variables have on Travel Time to Work. I will keep the mutated variables above (comparing the change in education to receiving a high school diploma, and using a car, truck, or van as a means of travel to work. 
+
+A regular linear regression is below:
+
+```{r}
+model2 <- lm(JWMNP ~ SEX_label + meansTW + edu + PINCP + vehicle + GRNTP + AGEP, 
+            data = transpo_data)
+options(scipen = 999)
+summary(model2)
+```
+
+
+The multiple R-squared value for this model is 0.06101, which means that this model predicts about 6% of the variation in Travel Time to Work in this dataset. 
+
+
+## Mutating Education and Income
+
+I've decided to group some of the categorical values of both Educational Attainment, and I've decided to group Income into different intervals. I've decided to group educational into 8 values rather than 24. I'll still compare all categories to earning just a high school diploma.
+
+1. No High School Diploma
+
+2. High School Diploma
+
+3. Some College
+
+4. Associate's Degree
+
+5. Bachelor's Degree
+
+6. Master's Degree
+
+7. Other Professional Degree
+
+8. Doctorate Degree
+
+I've also decided to convert my Income variable (continous) to a categorical variable by breaking up the income distribution (arbitrarily) into different intervals to capture differences between very low wealth, a broad middle class, and extreme wealth. Thank you to Ryan Johnson for helping me with the code for dividing the income into these intervals. I recognize that how I named these intervals may not truly represent where the median income lies. I will compare all values to the "Low to Mid Income", which is where I suggest most of the data lies. 
+
+1) Less than $25,000 (Low Income)
+
+2) $25,000 to $49,999.99 (Low to Mid Income)
+
+3) $50,000 to $74,999.99 (Mid Income)
+
+4) $75,000 to $99,999.99 (Mid to High Income)
+
+5) $100,000 and higher (High Income)
+
+```{r}
+transpo_data2 <- read_csv("transpo_data.csv") %>%
+  mutate(edu_attainment = case_when(
+    SCHL_label=="Some college, but less than 1 year"~"Some College",
+    SCHL_label=="Regular high school diploma"~"1High school diploma",
+    SCHL_label=="Bachelor's degree"~"Bachelor's degree",
+    SCHL_label=="1 or more years of college credit, no degree"~"Some College",
+    SCHL_label=="Master's degree"~"Master's degree",
+    SCHL_label=="GED or alternative credential"~"1High school diploma",
+    SCHL_label=="Doctorate degree"~"Doctorate degree",
+    SCHL_label=="Associate's degree"~"Associate's degree",
+    SCHL_label=="Grade 8"~"No High School Diploma",
+    SCHL_label=="Grade 7"~"No High School Diploma",
+    SCHL_label=="Grade 10"~"No High School Diploma",
+    SCHL_label=="12th grade - no diploma"~"No High School Diploma",
+    SCHL_label=="Grade 6"~"No High School Diploma",
+    SCHL_label=="Grade 11"~"No High School Diploma",
+    SCHL_label=="Professional degree beyond a bachelor's degree"~"Professional degree",
+    SCHL_label=="Grade 9"~"No High School Diploma",
+    SCHL_label=="No schooling completed"~"No High School Diploma",
+    SCHL_label=="Grade 5"~"No High School Diploma",
+    SCHL_label=="Grade 4"~"No High School Diploma",
+    SCHL_label=="Nursery school, preschool"~"No High School Diploma",
+    SCHL_label=="Grade 3"~"No High School Diploma",
+    SCHL_label=="Grade 1"~"No High School Diploma",
+    SCHL_label=="Kindergarten"~"No High School Diploma",
+    SCHL_label=="Grade 2"~"No High School Diploma")) %>%
+  mutate(income = case_when(
+    PINCP < 25000 ~ "Low Income",
+    (PINCP >= 25000) & (PINCP < 50000) ~ "1Low to Mid Income",
+    (PINCP >= 50000) & (PINCP < 75000) ~ "Mid Income",
+    (PINCP >= 75000) & (PINCP < 100000) ~ "Mid to High Income",
+    PINCP > 100000 ~ "High Income")) %>%
+  mutate(meansTW = case_when(
+    JWTR_label=="Bicycle"~"Bicycle",
+    JWTR_label=="Bus or trolley bus"~"Bus or\ntrolley bus",
+    JWTR_label=="Car, truck, or van"~"1Car, truck,\nor van",
+    JWTR_label=="Motorcycle"~"Motorcycle",
+    JWTR_label=="Other method"~"Other",
+    JWTR_label=="Railroad"~"Railroad",
+    JWTR_label=="Streetcar or trolley car (carro publico in Puerto Rico)"~"Streetcar or\ntrolley car",
+    JWTR_label=="Subway or elevated"~"Subway or\nelevated",
+    JWTR_label=="Taxicab"~"Taxicab",
+    JWTR_label=="Walked"~"Walk")) 
+```
+
+## Model 2: A Linear Regression with mutated variables
+
+I can run the linear regression with my newly mutated Education and Income variables.
+
+```{r}
+model3 <- lm(JWMNP ~ SEX_label + meansTW + edu_attainment + income + vehicle + GRNTP + AGEP, 
+            data = transpo_data2)
+options(scipen = 999)
+summary(model3)
+```
+
+This model has an r-squared value of 0.06346, which means that this model predicts about 6% of the variation in Travel Time to Work in this dataset. This r-squared value is barely higher than the previous model, with ungrouped educational outcomes and a continuous income set. 0.06346 compared to 0.06101.
+
+Interesting to note is that in the education variable, the only value to gain statistical significance was the coefficient for having earned a master's degree, suggesting that those with a masters degree will travel 2.8 minutes less to work than those with just a high school diploma. I thought that aggregating all of the K-12 grades might have brought about a significant value because it captures more people, but it didn't. 
+
+SEX_labelMale became more statistically significant with this model, which makes me think that there's an intereaction between sex and education or income. 
+
+Grouping income into intervals did increase the statistical significance from when it was continuous. The only statistical significant vale was the Low Income interval, suggesting that those who make less than $25,000 will actually travel about 1.9 minutes less to work than those who make between $25,000 and $50,000 per year. In the state of Colorado, jobs are fairly spread out throughout cities and not necessarily concentrated in hubs. Jobs that tend to be concentrated in hubs like downtown Denver or Boulder tend to be higher income jobs, so perhaps it's not too difficult for low-income earners to find housing closer to their jobs. 
+
+Speaking about housing, Gross Rent is statistically significant, but the coefficient is not very telling, suggesting that there's no real difference in travel time to work for every additional dollar paid for rent. 
+
+
+## Model 3: Interaction Between Income and Sex, and Between Education and Sex
+
+Seeing that statistical significance increased for Sex in my previous model, I wonder if that was due to the change in income from continuous to categorical data. I think that the effect of sex on income can tell us more about this model. 
+
+```{r}
+model4 <- lm(JWMNP ~ SEX_label + meansTW + edu_attainment + income + vehicle + GRNTP + AGEP + income:SEX_label + edu_attainment:SEX_label, 
+            data = transpo_data2)
+options(scipen = 999)
+summary(model4)
+```
+
+This model has an r-squared value of 0.06502, which means that this model predicts about 6% of the variation in Travel Time to Work in this dataset. This r-squared value is barely higher than the previous model without interaction terms. This is my best model yet. 0.06502 compared to 0.06346.
+
+Interestingly, neither of the interactions between Sex and Income were statistically significant. However, interactions between Sex and Bachelor's Degree and Sex and Master's Degree were statistically significant. 
+
+The first interaction suggests that men with a bachelor's degree will, on average and controlling for all other variables, travel for 3.8 minutes less to work than women with a bachelor's degree. 
+
+The second interaction suggests that men with a master's degree will, on average and controlling for all other variables, travel for 5.7 minutes less to work than women with a master's degree. 
+
+In the previous two models before examining interactions between Sex and Income/Education, men corresponded with greater travel time, so this model tells a more nuanced story of how Sex and Education interact with each other in correlating with travel time. 
+
+## Visualizing Model Fits
+
+The graph below compares the r-squared values for my four models. 
+
+```{r}
+ModelFit <- tibble(model = c(2, 3, 4),
+                   R_square = c(summary(model2)$adj.r.squared,
+                                summary(model3)$adj.r.squared,
+                                summary(model4)$adj.r.squared))
+
+ggplot(ModelFit, aes(x = model, y = R_square)) +
+  geom_line() +
+  scale_x_continuous(name = "",
+                   breaks = breaks <- seq(1, 4, by = 1),
+                   labels = paste("Model", breaks)) +
+  scale_y_continuous(name = "Adjusted R-squared value") +
+  theme_bw()
+```
+
+We can see from this that Model 4, with the interaction terms, had the highest r-squared value, but the difference across the three is quite small. 
+
+## Visualzing the Education and Sex Interaction on Commute Time
+
+Lastly, to visualze the effect of the interaction that I found in model four, I can make this graph. It shows the relationship between travel time to work and sex, by educational attainment, and holding all other variables constant. 
+
+```{r}
+cat_plot(model4, pred = edu_attainment, modx = SEX_label, interval = TRUE) +
+ scale_x_discrete(name = "Educational Attainment ",
+                    labels = c("High\nSchool\nDiploma", "Associate's\nDegree",
+                               "Bechelor's\nDegree", "Doctorate\nDegree","Master's\nDegree", "No High\nschool\nDiploma",    "Other\nProfessional\nDegree", "Some\nCollege")) +
+  scale_y_continuous(name = "Travel time to work (minutes)",
+                     breaks = seq(0, 45, by = 2)) +
+  scale_color_discrete(name = "") +
+  scale_linetype_discrete(name = "") +
+  scale_fill_discrete(name = "") 
+```
+
+
+
