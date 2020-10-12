@@ -3,6 +3,9 @@ title: "Assignment 5"
 author: "Miguel Perez Luna"
 date: "10/5/2020"
 output:
+  pdf_document:
+    toc: yes
+    toc_depth: '3'
   html_document:
     theme: cosmo
     toc: yes
