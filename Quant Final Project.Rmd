@@ -3,6 +3,9 @@ title: "Commute Times Among Renters in Colorado"
 author: "Miguel Perez Luna"
 date: "10/12/2020"
 output:
+  pdf_document:
+    toc: yes
+    toc_depth: '5'
   html_document:
     theme: paper
     toc: yes
@@ -244,7 +247,7 @@ ggplot(transpo_data, aes(x = edu_attainment, y = JWMNP)) +
 
 In this linear regression, I predicted travel time to work by variation in sex, educational attainment, means of travel to work, income, and rent. Sex is compared to female, means of transportation to work are compared to taking a car, truck, or van to work, and educational attainment is compared to earning a high school diploma.
 
-The table below presents the results of the linear regression. This model has an r-squared value of 0.06502, which means that this model predicts about 7% of the variation in travel time to work in this dataset.
+The appended table presents the results of the linear regression. This model has an r-squared value of 0.06502, which means that this model predicts about 7% of the variation in travel time to work in this dataset.
 
 ```{r message=FALSE, results = 'hide', echo=FALSE}
 model1 <- lm(JWMNP ~ SEX_label + meansTW + edu_attainment + PINCP + GRNTP + edu_attainment:SEX_label, 
