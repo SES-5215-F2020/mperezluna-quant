@@ -1,0 +1,345 @@
+---
+title: "Commute Times Among Renters in Colorado"
+author: "Miguel Perez Luna"
+date: "10/12/2020"
+output:
+  html_document:
+    theme: paper
+    toc: yes
+    toc_depth: 5
+    toc_float: yes
+    code_folding: hide
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r load libraries, message=FALSE, echo=FALSE}
+library(tidycensus)
+library(tidyverse)
+library(ggplot2)
+library(scales)
+library(knitr)
+library(jtools)
+library(interactions)
+```
+
+## Introduction
+
+This report investigates the travel time to work of renters in the state of Colorado. I was curious about the extent to which travel time to work of renters was related to a renter's sex, educational attainment, means of travel to work, income and rent. 
+
+My research question is: 
+
+**How is a renter's travel time to work impacted by their sex, educational attainment, means of travel to work, income, and rent?**
+
+I hypothesize that use of public transportation is correlated with greater travel time for renters than are driving or active mobility. I also expect to find that individuals with higher levels of educational attainment will correspond with longer commute times. I expect to see this also occurring between income and travel time. Lastly, I expect to see differences in travel time by sex, and I expect sex to interact with income and education to predict travel time differences.
+
+A suburban, single-use building pattern reigns supreme throughout cities in Colorado. While this pattern is slowly starting to change with more mixed-use developments sprouting up in some places, the vast majority of cities are still built to accommodate travel by vehicle first. Larger, more expensive housing options are still built farther from city centers than more affordable housing and yet renters still benefit from a network built for drivers. This research question is important because it might highlight inequities in travel time to work that happen in less dense cities.
+
+## Data
+
+### Dataset
+
+I created my dataset from the 2018 American Community Survey (ACS). The dataset has data for 6,914 individuals, all of whom are renters in the state of Colorado with monthly rents greater than $0.00, travel times to work that are longer than 0 minutes, and incomes that are $0.00 or greater. 
+
+```{r message=FALSE, results = 'hide', echo=FALSE}
+transpo_data <- read_csv("transpo_data.csv") %>%
+  mutate(edu_attainment = case_when(
+    SCHL_label=="Some college, but less than 1 year"~"Some\nCollege",
+    SCHL_label=="Regular high school diploma"~"1High\nschool\ndiploma",
+    SCHL_label=="Bachelor's degree"~"Bachelor's\ndegree",
+    SCHL_label=="1 or more years of college credit, no degree"~"Some\nCollege",
+    SCHL_label=="Master's degree"~"Master's\ndegree",
+    SCHL_label=="GED or alternative credential"~"1High\nschool\ndiploma",
+    SCHL_label=="Doctorate degree"~"Doctorate\ndegree",
+    SCHL_label=="Associate's degree"~"Associate's\ndegree",
+    SCHL_label=="Grade 8"~"No High\nSchool\nDiploma",
+    SCHL_label=="Grade 7"~"No High\nSchool\nDiploma",
+    SCHL_label=="Grade 10"~"No High\nSchool\nDiploma",
+    SCHL_label=="12th grade - no diploma"~"No High\nSchool\nDiploma",
+    SCHL_label=="Grade 6"~"No High\nSchool\nDiploma",
+    SCHL_label=="Grade 11"~"No High\nSchool\nDiploma",
+    SCHL_label=="Professional degree beyond a bachelor's degree"~"Professional\ndegree",
+    SCHL_label=="Grade 9"~"No High\nSchool\nDiploma",
+    SCHL_label=="No schooling completed"~"No High\nSchool\nDiploma",
+    SCHL_label=="Grade 5"~"No High\nSchool\nDiploma",
+    SCHL_label=="Grade 4"~"No High\nSchool\nDiploma",
+    SCHL_label=="Nursery school, preschool"~"No High\nSchool\nDiploma",
+    SCHL_label=="Grade 3"~"No High\nSchool\nDiploma",
+    SCHL_label=="Grade 1"~"No High\nSchool\nDiploma",
+    SCHL_label=="Kindergarten"~"No High\nSchool\nDiploma",
+    SCHL_label=="Grade 2"~"No High\nSchool\nDiploma")) %>%
+  mutate(meansTW = case_when(
+    JWTR_label=="Bicycle"~"Bicycle",
+    JWTR_label=="Bus or trolley bus"~"Bus or\ntrolley bus",
+    JWTR_label=="Car, truck, or van"~"1Car, truck,\nor van",
+    JWTR_label=="Motorcycle"~"Motorcycle",
+    JWTR_label=="Other method"~"Other",
+    JWTR_label=="Railroad"~"Railroad",
+    JWTR_label=="Streetcar or trolley car (carro publico in Puerto Rico)"~"Streetcar or\ntrolley car",
+    JWTR_label=="Subway or elevated"~"Subway or\nelevated",
+    JWTR_label=="Taxicab"~"Taxicab",
+    JWTR_label=="Walked"~"Walk")) %>% 
+  filter(JWMNP > 0, PINCP > -1, GRNTP > 0) %>%
+  select(SEX_label, meansTW, edu_attainment, PINCP, JWMNP, GRNTP)
+```
+
+
+### Variables
+
+My dataset contains the following variables:
+
+#### Categorical Variables
+
+1. Sex: Male or Female
+
+2. Educational Attainment: No high school diploma, high school diploma, some college, bachelor's degree, associate's degree, master's degree, professional degree, and doctorate degree
+
+3. Means of Travel to Work: Walk, bicycle, motorcycle, car/truck/van, taxicab, bus or trolley bus, subway or elevated, streetcar or trolley car, railroad, and other
+
+#### Continuous Variables
+
+4. Annual Income
+
+5. Monthly Rent
+
+6. Travel Time to Work (in minutes)
+
+
+## Methods
+
+Once I established the dataset and variables for my study, I began by examining the relationships between sex, educational attainment, means of travel to work, annual income, monthly rent, and travel time to work. I chose to test the correlations of each variable with travel time to work by using tests such as a Pearson's correlation test, a two-sample T-test, and an analysis of variance (ANOVA) test. Afterwards, I ran a linear regression to predict travel time to work by variation in sex, educational attainment, means of travel to work, income, and rent. I also examined how sex affects the relationship between educational attainment and travel time to work by creating an interaction between sex and educational attainment. These statistical tests allowed me to determine statistically significant relationships among the variables that would confirm my hypothesis that travel time is impacted by these variables. 
+
+
+
+## Results
+
+#### Income and Travel Time
+
+I ran a Pearson's correlation test to determine the correlation between income and travel time. This correlation is weak (r = 0.039) though still statistically significant at a 95-percent confidence interval (p = 0.001346). As seen in Figure 1, the trend line is almost exactly flat, which means that a change in income does not necessarily predict a change in travel time to work.
+
+```{r message=FALSE, results = 'hide', echo=FALSE}
+income_time_correlation <- cor.test(transpo_data$PINCP, transpo_data$JWMNP)
+
+income_time_correlation
+
+options(scipen = 999)
+ggplot(transpo_data, aes(x = PINCP, y = JWMNP)) +
+  geom_point(size = 0.5, alpha = 0.25, position = "jitter") +
+  geom_smooth() +
+  theme_bw() +
+  scale_x_continuous(name = "Income") +
+  scale_y_continuous(name = "Travel Time to Work in Minutes") +
+  annotate(geom = "text", x = 0, y = 170, 
+           label = paste("Correlation (95-percent confidence):",
+                         prettyNum(income_time_correlation$conf.int[1], digits = 2), 
+                         "to",
+                         prettyNum(income_time_correlation$conf.int[2], digits = 2)),
+           hjust = 0) +
+  labs(title = "Figure 1: Income and Travel Time to Work")
+```
+
+#### Rent and Travel Time
+
+I ran a Pearson's correlation test to determine the correlation between monthly rent and travel time. This correlation is weak (r = 0.053) though still statistically significant at a 95-percent confidence interval (p = 0.000008822). As seen in Figure 2, the trend line is almost exactly flat, which means that a change in rent does not necessarily predict a change in travel time to work. 
+
+```{r message=FALSE, results = 'hide', echo=FALSE}
+time_rent_correlation <- cor.test(transpo_data$GRNTP, transpo_data$JWMNP)
+
+time_rent_correlation
+
+options(scipen = 999)
+ggplot(transpo_data, aes(x = GRNTP, y = JWMNP)) +
+  geom_point(size = 0.5, alpha = 0.25, position = "jitter") +
+  geom_smooth() +
+  theme_bw() +
+  scale_x_continuous(name = "Gross Rent") +
+  scale_y_continuous(name = "Travel Time to Work in Minutes") +
+  annotate(geom = "text", x = 0, y = 170, 
+           label = paste("Correlation (95-percent confidence):",
+                         prettyNum(time_rent_correlation$conf.int[1], digits = 2), 
+                         "to",
+                         prettyNum(time_rent_correlation$conf.int[2], digits = 2)),
+           hjust = 0) +
+  labs(title = "Figure 2: Rent and Travel Time to Work")
+  
+```
+
+#### Sex and Travel Time
+
+I ran a two-sample t-test to determine the relationship between sex, a binary categorical variable, and travel time to work. According to the test, males generally travel for a longer time than females when going to work. Males, on average, take 25.89 minutes to get to work, while females take 23.49 minutes to get to work. This is statistically significant (p < 0.05). We can visualize this result with a violin plot, as seen in Figure 3. 
+
+```{r message=FALSE, results = 'hide', echo=FALSE}
+time_difference = t.test(JWMNP ~ SEX_label == "Male",
+                    data = transpo_data)
+time_difference
+
+ggplot(transpo_data, aes(x = SEX_label, y = JWMNP)) +
+  geom_violin() +
+  theme_bw() +
+  scale_x_discrete(name = "Sex",
+                   labels = c("Female", "Male")) +
+   scale_y_continuous(name = "Travel time to work in minutes", 
+                     breaks = seq(0, 150, by = 15),
+                     labels = paste(prettyNum(seq(0, 150, by = 15),
+                                              big.mark = ","))) +
+  annotate(geom = "text", x = 1.5, y = 75, size = 3,
+           label = paste("Difference in means\n(95% confidence):\n",
+                         prettyNum(abs(time_difference$conf.int[2]), 
+                                   digits = 3), " to ",
+                         prettyNum(abs(time_difference$conf.int[1]), 
+                                   digits = 3),
+                         sep = "")) +
+  annotate(geom = "text", x = 1, y = time_difference$estimate[1], size = 3,
+           label = paste("Mean (95% confidence):\n",
+                         prettyNum(time_difference$estimate[1], digits = 3))) +
+  annotate(geom = "text", x = 2, y = time_difference$estimate[2], size = 3,
+           label = paste("Mean (95% confidence):\n",
+                         prettyNum(time_difference$estimate[2], digits = 3))) +
+  labs(title = "Figure 3: Sex and Travel Time to Work")
+```
+
+#### Means of Travel to Work and Travel Time
+
+I ran an ANOVA test to determine the correlations between each method of travel to work and travel time to work. Since the p-value is less than 0.0000000000000002, we can be 95% confident that there is a significant association between the means of transportation and the time it takes to get to work. I can represent these differences with a box plot. 
+
+```{r message=FALSE, results = 'hide', echo=FALSE}
+means_time_anova <- aov(JWMNP ~ meansTW, data = transpo_data)
+
+summary(means_time_anova)
+
+ggplot(transpo_data, aes(x = meansTW, y = JWMNP)) +
+  geom_boxplot() +
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 90)) +
+  scale_x_discrete(name = "Means of Transportation to Work") +
+  scale_y_continuous(name = "Travel Time to Work in Minutes", 
+                     breaks = seq(0, 150, by = 15),
+                     labels = paste(prettyNum(seq(0, 150, by = 15))))+
+  labs(title = "Figure 4: Means of Travel and Travel Time to Work")
+```
+
+#### Educational Attainment and Travel Time
+
+I ran an ANOVA test to determine the correlations between each method of travel to work and travel time to work. Since the p-value is equal to 0.0729, we cannot be 95% confident that there is a significant association between educational attainment and the time it takes to get to work. I can represent these differences with a box plot. 
+
+```{r message=FALSE, results = 'hide', echo=FALSE}
+ed_time_anova <- aov(JWMNP ~ edu_attainment, data = transpo_data)
+
+summary(ed_time_anova)
+
+ggplot(transpo_data, aes(x = edu_attainment, y = JWMNP)) +
+  geom_boxplot() +
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 90)) +
+  scale_x_discrete(name = "Educational Attainment") +
+  scale_y_continuous(name = "Travel Time to Work in Minutes", 
+                     breaks = seq(0, 150, by = 15),
+                     labels = paste(prettyNum(seq(0, 150, by = 15))))+
+  labs(title = "Figure 5: Educational Attainment and Travel Time to Work")
+```
+
+#### Linear Regression
+
+In this linear regression, I predicted travel time to work by variation in sex, educational attainment, means of travel to work, income, and rent. Sex is compared to female, means of transportation to work are compared to taking a car, truck, or van to work, and educational attainment is compared to earning a high school diploma.
+
+The table below presents the results of the linear regression. This model has an r-squared value of 0.06502, which means that this model predicts about 7% of the variation in travel time to work in this dataset.
+
+```{r message=FALSE, results = 'hide', echo=FALSE}
+model1 <- lm(JWMNP ~ SEX_label + meansTW + edu_attainment + PINCP + GRNTP + edu_attainment:SEX_label, 
+            data = transpo_data)
+options(scipen = 999)
+summary(model1)
+```
+
+```{r message=FALSE, echo=FALSE}
+coeff_names <- c("Male" = "SEX_labelMale",
+                 "Bicycle" = "meansTWBicycle",
+                 "Bus or trolley bus" = "meansTWBus or\ntrolley bus",
+                 "Motorcycle" = "meansTWMotorcycle",
+                 "Other" = "meansTWOther",
+                 "Railroad" = "meansTWRailroad",
+                 "Streetcar or trolley car" = "meansTWStreetcar or\ntrolley car",
+                 "Subway or elevated" = "meansTWSubway or\nelevated",
+                 "Taxicab" = "meansTWTaxicab",
+                 "Walk" = "meansTWWalk",
+                 "Associate's degree" = "edu_attainmentAssociate's\ndegree",
+                 "Bachelor's degree" = "edu_attainmentBachelor's\ndegree",
+                 "Doctorate degree" = "edu_attainmentDoctorate\ndegree",
+                 "Master's degree" = "edu_attainmentMaster's\ndegree",
+                 "No High School Diploma" = "edu_attainmentNo High\nSchool\nDiploma",
+                 "Professional degree" = "edu_attainmentProfessional\ndegree",
+                 "Some College" = "edu_attainmentSome\nCollege",
+                 "Income" = "PINCP",
+                 "Montly Rent" = "GRNTP",
+                 "Interaction:\nmale and Associate's Degree" = "SEX_labelMale:edu_attainmentAssociate's\ndegree",
+                 "Interaction:\nmale and Bachelor's Degree" = "SEX_labelMale:edu_attainmentBachelor's\ndegree",
+                 "Interaction:\nmale and Doctorate Degree" = "SEX_labelMale:edu_attainmentDoctorate\ndegree",
+                 "Interaction:\nmale and Master's Degree" = "SEX_labelMale:edu_attainmentMaster's\ndegree",
+                 "Interaction:\nmale and No High School Diploma" = "SEX_labelMale:edu_attainmentNo High\nSchool\nDiploma",
+                 "Interaction:\nmale and Professional Degree" = "SEX_labelMale:edu_attainmentProfessional\ndegree",
+                 "Interaction:\nmale and Some College" = "SEX_labelMale:edu_attainmentSome\nCollege")
+
+export_summs(model1,  
+             error_format = "(p = {p.value})",
+             error_pos = "same",
+             model.names = c("Model 1"),
+             coefs = coeff_names) 
+```
+
+##### Sex and Travel Time
+
+The coefficient for males statistically significant at a 99-percent confidence interval. The coefficient is 3.59, which means that on average and controlling for all other variables in this model, males travel to work for 3.59 minutes longer than females. 
+
+##### Means of Transportation and Travel Time
+
+Of the means of transportation to work, only two did not reach statistical significance: motorcycle and taxicab, likely due to small sample sizes of 16 and 19 observations respectively. 
+
+Every other method of transportation had a statistically significant coefficient at a 99.9-percent confidence interval. 
+
+Active mobility means of travel predicted shorter travel times compared to driving a car, truck, or van. On average, and controlling for all other variables, those who walk to work travel 8.64 fewer minutes to work, and those who bike travel 6.63 fewer minutes than those who drive a car, truck, or van to work. 
+
+Public transportation means of travel predicted longer travel times compared to driving a car, truck, or van. On average and controlling for all other variables, bus trips take 22.01 minutes longer, railroad trips take 14.95 minutes longer, streetcar trips take 26.17 minutes longer, and subway/elevated rail trips take 18.40 minutes longer compared to commuting by private vehicle.
+
+##### Educational Attainment and Travel Time
+
+None of the coefficients for the values of educational attainment reached statistical significance. 
+
+##### Income and Travel Time
+
+The coefficient for income was statistically significant at a 99-percent confidence interval, but the coefficient itself was 0.00, which means that there is no predicted change in travel time for every additional dollar earned in one's income. 
+
+##### Monthly Rent and Travel Time
+
+The coefficient for monthly rent was statistically significant at a 99.9-percent confidence interval, but the coefficient itself was 0.00, which means that there is no predicted change in travel time for dollar spent on monthly income.
+
+##### The effect of sex on educational attainment and travel time
+
+Although males are predicted to travel longer than females, and although there is no statistical significance in the coefficients for any of the educational attainment categories, an interaction between sex and educational attainment reveals a statistically significant coefficient predicting shorter travel times for males with Bachelor's Degrees and for males with Master's Degrees relative to females with the same degrees, and relative to individuals who have only a high school diploma. 
+
+The coefficient for males with Bachelor's degrees is statistically significant at a 95-percent confidence interval and predicts that these males will travel 3.82 fewer minutes than women with this same degree, and relative to individuals who have only a high school diploma. 
+
+The coefficient for males with Master's degrees is statistically significant at a 99-percent confidence interval and predicts that these males will travel 5.82 fewer minutes than women with this same degree, and relative to individuals who have only a high school diploma. 
+
+
+## Discussion
+
+This study reveals some key findings. First, it finds that the method of travel one takes to work has the greatest effect practically in how long one's commute to work will be. As expected, different forms of public transportation increase commute times by anywhere from 14.95 to 26.17 minutes relative to driving. Walking and biking to work reduce commutes to work relative to driving by 8.64 and 6.63 minutes respectively. The effect of active mobility may not be so surprising as individuals who prefer to walk or bike to work might do so simply because they live closer to work, or at least close enough that they find it convenient. The findings on means of transportation support my suspicion that public transportation is not largely prioritized in the state of Colorado, and that increasing efficiency for drivers remains a high priority. 
+
+A second finding, and the most surprising to me, is that a change in income or monthly rents do not predict an increase or decrease in commute time. There are a number of explanations for this lack of trend. It's possible that while more expensive housing is further from city centers where jobs are located, that housing is not for rent and therefore my sample of renters may actually not live far from city centers at all. Another explanation is that for most Coloradan cities, city centers do not necessarily contain most of the city's jobs, and therefore, regardless of how much money an individual makes, they are able to choose to live close to their jobs. A last explanation might be that rental housing is not necessarily clustered in cities by rental costs, but rather dispersed fairly evenly throughout. 
+
+Another finding that stood out to me was that educational attainment alone was not a significant predictor of travel time. However, the interaction between sex and educational attainment suggested that males with bachelor's and master's degrees benefited from shorter commutes than females with the same degrees. This is also interesting becasue on average all males travel 3.59 minutes more than females, but this special subset of males experience much shorter commutes. This finding is harder to explain, but one possible reason is that individuals with bachelor's and master's degrees tend to hold white-collar jobs which also tend to be located in city centers. Among males and females that hold bachelor's and master's degrees, perceptions of safety in city centers might be a difference in where this subset of people choose to live. Thus, while these individuals are working in the same place, it's possible that females may be less likely to live in city centers. I recognize the major assumption I am making here about how perceptions of safety vary by sex. 
+
+These findings together partially support my hypothesis. In general, variations in income, rent, and educational attainment are not good predictors of commute time, but variations in means of travel to work, sex, and interactions between sex and educational attainment paint a clearer picture of how long commute times will be for different indivdiuals. 
+
+This study has its limitations. First of all, I pulled data from the ACS 2018 sample in an effort to have more updated data, though pulling from the decennial census datat would provide for a greater sample size. Another limitation is that I did not account for age, which may have stronger influences on the means of transportation, and therefore commute times, and these patterns may paint even clearer pictures. Perhaps the greatest limitation is the narrow scope of my sample size. I examined only renters who paid more than $0.00 and who did not work from home. Examining renters, homeowners, and homeless individuals would provide for a more representative study of commute times in Colorado. Similarly, this study accounts for 6,914 individuals across Colorado, and this sample size may be both small and it might aggregate the datat in a way that removes differences between urban and rural commute times. For example, commuting in the heart of Denver is going to look quite different than commuting in the small mountain town of Salida. It would be worth refining my sample size to more specific regional areas to find more representive relationships among my variables of those areas. 
+
+## Conclusion
+
+This study finds that renters who take public transportation in Colorado are more likely to have longer commute times than renters who drive or walk or bike to work. Furthermore, this study finds that there are not necessarily inequities in commute times by income or monthly rent. Lastly, it reveals that there may inequities in commute time by sex.
+
+Inequalites in transportation remain an issue in Colorado and this study adds to the conversation around this. It invites further study on the access and efficiency of public transportation as well as the role that transportation planning plays in helping people of all sexes and genders move around their cities or towns safely and equitably. 
+
+
+
